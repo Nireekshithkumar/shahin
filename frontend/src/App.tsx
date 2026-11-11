@@ -40,37 +40,37 @@ const AdminRoute: React.FC<{ children: React.ReactNode; onOpenAuth: () => void }
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-300 border-t-amber-600 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#D2D2D4] border-t-[#FF634A] rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!user || user.role !== 'ADMIN') {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center animate-fade-in">
-        <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto mb-4 shadow-sm">
-          <ShieldAlert className="w-8 h-8 text-rose-600" />
+      <div className="max-w-xl mx-auto px-4 py-20 text-center text-[#000000]">
+        <div className="w-14 h-14 rounded-xl bg-[#E7E7E7] border border-[#D2D2D4] text-[#000000] flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-7 h-7 text-[#FF634A]" />
         </div>
-        <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-rose-100 text-rose-800 border border-rose-300">
+        <span className="px-3 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-[#000000] text-[#FFFFFF]">
           HTTP 403 Forbidden
         </span>
-        <h1 className="text-2xl font-black text-slate-900 mt-4 mb-2">
-          Administrator Access Required
+        <h1 className="text-xl font-bold text-[#000000] mt-4 mb-2 tracking-tight">
+          Administrator Privileges Required
         </h1>
-        <p className="text-xs text-slate-600 max-w-md mx-auto mb-6 leading-relaxed">
-          The requested Administrative Operations Hub is restricted exclusively to authorized platform administrators. Normal citizen accounts cannot access or perform administrative operations.
+        <p className="text-xs text-[#000000]/70 max-w-md mx-auto mb-6 leading-relaxed">
+          The requested Administrative Operations Hub is restricted exclusively to authorized platform administrators. Citizen accounts cannot view or modify administrative records.
         </p>
 
         <div className="flex items-center justify-center gap-3">
           <a
             href="/"
-            className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-colors inline-flex items-center gap-1.5"
+            className="px-4 py-2 rounded-lg bg-[#E7E7E7] hover:bg-[#D2D2D4] border border-[#D2D2D4] text-[#000000] text-xs font-bold transition-colors inline-flex items-center gap-1.5"
           >
             <ArrowLeft className="w-4 h-4" /> Return to Citizen Portal
           </a>
           <button
             onClick={onOpenAuth}
-            className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 text-xs font-bold transition-colors inline-flex items-center gap-1.5 shadow-md"
+            className="px-4 py-2 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] text-xs font-bold transition-colors inline-flex items-center gap-1.5"
           >
             <Lock className="w-4 h-4" /> Sign In as Administrator
           </button>
