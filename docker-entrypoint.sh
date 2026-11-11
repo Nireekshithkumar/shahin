@@ -13,9 +13,10 @@ echo "==> [1/4] Starting internal Redis..."
 redis-server --daemonize yes --protected-mode no --bind 127.0.0.1
 sleep 1
 
-# 2. Database migrations
-echo "==> [2/4] Running database migrations..."
+# 2. Database migrations & single admin bootstrap
+echo "==> [2/4] Running database migrations and bootstrapping single admin..."
 python /app/backend/manage.py migrate --noinput
+python /app/backend/manage.py bootstrap_admin || true
 
 # 3. Seed opportunities (idempotent, skips duplicates)
 echo "==> [3/4] Ensuring official opportunities and schemes are seeded..."

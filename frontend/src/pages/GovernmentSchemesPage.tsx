@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Landmark, HeartPulse, Tractor, Home, Briefcase,
-  ShieldCheck, ExternalLink, Search, CheckCircle2, FileText, ChevronRight
+  Landmark, Tractor, ShieldCheck, ExternalLink,
+  Briefcase, Heart, Home, ArrowRight, FileText
 } from 'lucide-react';
 import { opportunityService } from '../services/scholarsetuService';
 import { Opportunity } from '../types';
@@ -15,18 +15,17 @@ export const GovernmentSchemesPage: React.FC = () => {
   const categories = [
     { id: 'ALL', name: 'All Schemes', icon: Landmark },
     { id: 'AGRICULTURE_BENEFIT', name: 'Agriculture & Farmers', icon: Tractor },
-    { id: 'HEALTH_SCHEME', name: 'Healthcare & Insurance', icon: HeartPulse },
+    { id: 'HEALTH_SCHEME', name: 'Healthcare & Insurance', icon: Heart },
     { id: 'PENSION', name: 'Pensions & Senior Welfare', icon: ShieldCheck },
     { id: 'EMPLOYMENT_BENEFIT', name: 'Employment & Skills', icon: Briefcase },
-    { id: 'DISABILITY_BENEFIT', name: 'Disability Benefits (PwD)', icon: HeartPulse },
-    { id: 'SUBSIDY', name: 'Subsidies & Financial Aid', icon: Home },
+    { id: 'SUBSIDY', name: 'Subsidies & Direct Benefits', icon: Home },
   ];
 
   useEffect(() => {
     const fetchSchemes = async () => {
       setLoading(true);
       try {
-        const params: Record<string, any> = {};
+        const params: Record<string, any> = { opportunity_type: 'GOVERNMENT_SCHEME' };
         if (selectedCategory !== 'ALL') {
           params.type = selectedCategory;
         }
@@ -45,24 +44,19 @@ export const GovernmentSchemesPage: React.FC = () => {
   }, [selectedCategory, search]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-[#000000]">
       {/* Header */}
-      <div className="mb-8 text-center max-w-3xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 mb-3">
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-          Central & State Citizen Welfare Directory
-        </div>
-        <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-          Government Schemes for Indian Citizens
+      <div className="mb-6 pb-4 border-b border-[#D2D2D4]">
+        <h1 className="text-2xl font-bold tracking-tight text-[#000000]">
+          Government Schemes Directory
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-2">
-          Discover healthcare, agricultural benefits, pension entitlements, and social assistance
-          subsidies backed by the Government of India and State Ministries.
+        <p className="text-xs text-[#000000]/60 mt-1">
+          Direct welfare entitlements, farmer subsidies, pension schemes, and healthcare benefits from Central and State Ministries.
         </p>
       </div>
 
-      {/* Category Pills */}
-      <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none justify-start sm:justify-center">
+      {/* Category Filter Pills */}
+      <div className="flex gap-1.5 overflow-x-auto pb-3 mb-6 scrollbar-none">
         {categories.map((cat) => {
           const Icon = cat.icon;
           const active = selectedCategory === cat.id;
@@ -70,79 +64,79 @@ export const GovernmentSchemesPage: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 active
-                  ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                  ? 'bg-[#FF634A] text-[#FFFFFF]'
+                  : 'bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4] hover:border-[#000000]'
               }`}
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-3.5 h-3.5" />
               {cat.name}
             </button>
           );
         })}
       </div>
 
-      {/* Scheme Cards */}
+      {/* Scheme Cards Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-64 rounded-2xl bg-white border border-slate-200 animate-pulse" />
+            <div key={i} className="h-48 rounded-xl bg-[#E7E7E7] animate-pulse" />
           ))}
         </div>
       ) : schemes.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-slate-200 p-8">
-          <Landmark className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-slate-800">No schemes found in this category</h3>
-          <p className="text-xs text-slate-500 mt-1">Select "All Schemes" to view all central and state welfare programs.</p>
+        <div className="text-center py-16 bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-8">
+          <Landmark className="w-10 h-10 text-[#000000]/30 mx-auto mb-2" />
+          <h3 className="text-xs font-bold text-[#000000]">No schemes found in this category</h3>
+          <p className="text-xs text-[#000000]/60 mt-1">Select "All Schemes" to view all active welfare entitlements.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {schemes.map((scheme) => (
             <div
               key={scheme.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-5 flex flex-col justify-between hover:border-[#000000] transition-colors"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4]">
                     {scheme.opportunity_type.replace(/_/g, ' ')}
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-500">
-                    {scheme.applicable_state}
+                  <span className="text-[10px] font-bold text-[#FF634A] uppercase tracking-wider">
+                    {scheme.applicable_state || 'All India'}
                   </span>
                 </div>
 
-                <h3 className="font-bold text-slate-900 text-sm mb-1.5">
+                <h3 className="font-bold text-[#000000] text-xs line-clamp-2 mb-1">
                   {scheme.title}
                 </h3>
-                <p className="text-xs text-slate-500 font-medium mb-3">{scheme.provider}</p>
+                <p className="text-[11px] text-[#000000]/60 mb-3 truncate">{scheme.provider}</p>
 
-                <p className="text-xs text-slate-600 line-clamp-3 mb-4 leading-relaxed">
+                <p className="text-xs text-[#000000]/70 line-clamp-3 mb-4 leading-relaxed">
                   {scheme.short_description}
                 </p>
 
                 {scheme.benefit_description && (
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 mb-4 text-xs">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase">Entitlement & Benefit</p>
-                    <p className="font-bold text-emerald-700 mt-0.5">{scheme.benefit_description}</p>
+                  <div className="p-2.5 rounded-lg bg-[#FFFFFF] border border-[#D2D2D4] mb-4 text-xs">
+                    <span className="text-[10px] font-bold uppercase text-[#000000]/50 block">Entitlement</span>
+                    <span className="font-semibold text-[#000000] text-xs">{scheme.benefit_description}</span>
                   </div>
                 )}
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  Official Source
+              <div className="pt-3 border-t border-[#D2D2D4] flex items-center justify-between">
+                <span className="text-[10px] text-[#000000]/60 flex items-center gap-1 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#FF634A]" />
+                  Gazette Verified
                 </span>
 
                 <a
                   href={scheme.official_application_url || scheme.official_information_url || 'https://www.myscheme.gov.in'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+                  className="px-3 py-1.5 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] text-xs font-bold flex items-center gap-1.5 transition-colors"
                 >
-                  Official Portal <ExternalLink className="w-3.5 h-3.5" />
+                  Apply on Portal <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
             </div>

@@ -25,6 +25,8 @@ from apps.notifications.serializers import (
 from apps.notifications.email_service import EmailService
 from apps.opportunities.models import Opportunity
 
+from apps.accounts.permissions import IsScholarSetuAdmin
+
 logger = logging.getLogger('notifications')
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -106,7 +108,7 @@ class EmailDeliveryHistoryView(generics.ListAPIView):
         ).order_by('-created_at')
 
 class SendTestEmailView(views.APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsScholarSetuAdmin]
 
     def post(self, request):
         user = request.user
@@ -243,7 +245,7 @@ class OpportunitySubscriptionSettingsView(views.APIView):
 # =============================================================================
 
 class AdminNotificationStatsView(views.APIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsScholarSetuAdmin]
 
     def get(self, request):
         now = timezone.now()
@@ -310,7 +312,7 @@ class AdminNotificationStatsView(views.APIView):
         }, status=status.HTTP_200_OK)
 
 class AdminDeliveryLogsView(generics.ListAPIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsScholarSetuAdmin]
     serializer_class = EmailDeliveryLogSerializer
     pagination_class = StandardResultsSetPagination
 
@@ -333,7 +335,7 @@ class AdminDeliveryLogsView(generics.ListAPIView):
         return qs
 
 class AdminRetryEmailView(views.APIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsScholarSetuAdmin]
 
     def post(self, request, log_id):
         try:
@@ -367,7 +369,7 @@ class AdminRetryEmailView(views.APIView):
         }, status=status.HTTP_200_OK)
 
 class AdminTemplatePreviewView(views.APIView):
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [IsScholarSetuAdmin]
 
     def get(self, request, template_type):
         opp = Opportunity.objects.first()

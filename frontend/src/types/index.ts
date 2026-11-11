@@ -96,6 +96,7 @@ export interface Opportunity {
   verification_status: string;
   reliability_status: string;
   is_featured: boolean;
+  is_published?: boolean;
 }
 
 export interface EligibilityResult {
@@ -125,13 +126,18 @@ export interface RecommendationItem {
 export interface ApplicationTrackerItem {
   id: number;
   opportunity: number;
-  opportunity_details: Opportunity;
+  opportunity_details?: Opportunity;
+  opportunity_detail?: Opportunity;
   status: string;
   submission_date?: string;
+  application_date?: string | null;
   application_reference_number?: string;
+  reference_number?: string;
+  expected_benefit?: number | null;
   personal_notes: string;
-  documents_checklist: { name: string; status: string }[];
-  reminder_enabled: boolean;
+  documents_checklist?: { name: string; status: string }[];
+  reminder_enabled?: boolean;
+  history?: any[];
   created_at: string;
   updated_at: string;
 }

@@ -6,9 +6,11 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isCitizen: boolean;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<void>;
-  register: (email: string, pass: string, name?: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<User>;
+  register: (email: string, pass: string, name?: string) => Promise<User>;
   googleLogin: (credential: string) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>;
@@ -49,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => window.removeEventListener('auth:logout', handleLogout);
   }, []);
 
-  const login = async (email: string, pass: string) => {
+  const login = async (email: string, pass: string): Promise<User> => {
     setIsLoading(true);
     try {
       const res = await authService.login({ email, password: pass });
@@ -57,12 +59,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(res.user);
       const p = await profileService.getProfile();
       setProfile(p);
+      return res.user;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const register = async (email: string, pass: string, name?: string) => {
+  const register = async (email: string, pass: string, name?: string): Promise<User> => {
     setIsLoading(true);
     try {
       const res = await authService.register({ email, password: pass, full_name: name });
@@ -70,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(res.user);
       const p = await profileService.getProfile();
       setProfile(p);
+      return res.user;
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         isAuthenticated: !!user,
+        isAdmin: user?.role === 'ADMIN',
+        isCitizen: !user || user?.role === 'CITIZEN',
         isLoading,
         login,
         register,

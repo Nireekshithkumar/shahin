@@ -24,14 +24,23 @@ class GovernmentLevel(models.TextChoices):
     INTERNATIONAL = 'INTERNATIONAL', 'International / Bilateral'
 
 class VerificationStatus(models.TextChoices):
-    OFFICIAL_VERIFIED = 'OFFICIAL_VERIFIED', 'Official Source Verified'
-    IMPORTED_UNVERIFIED = 'IMPORTED_UNVERIFIED', 'Imported, Not Yet Verified'
-    NEEDS_MANUAL_REVIEW = 'NEEDS_MANUAL_REVIEW', 'Requires Manual Review'
-    SOURCE_UNAVAILABLE = 'SOURCE_UNAVAILABLE', 'Source Unavailable'
-    DEADLINE_CONFIRMATION_NEEDED = 'DEADLINE_CONFIRMATION_NEEDED', 'Deadline Needs Confirmation'
-    EXPIRED = 'EXPIRED', 'Expired / Closed'
-    DISCONTINUED = 'DISCONTINUED', 'Discontinued'
-    ARCHIVED = 'ARCHIVED', 'Archived'
+    # Prompt-specified 6 standard verification statuses
+    PENDING_VERIFICATION = 'PENDING_VERIFICATION', 'Pending Verification'
+    VERIFIED = 'VERIFIED', 'Verified'
+    NEEDS_REVIEW = 'NEEDS_REVIEW', 'Needs Review'
+    OUTDATED = 'OUTDATED', 'Outdated'
+    CLOSED = 'CLOSED', 'Closed'
+    REJECTED = 'REJECTED', 'Rejected'
+
+    # Legacy keys for existing records
+    OFFICIAL_VERIFIED = 'OFFICIAL_VERIFIED', 'Official Source Verified (Legacy)'
+    IMPORTED_UNVERIFIED = 'IMPORTED_UNVERIFIED', 'Imported, Not Yet Verified (Legacy)'
+    NEEDS_MANUAL_REVIEW = 'NEEDS_MANUAL_REVIEW', 'Requires Manual Review (Legacy)'
+    SOURCE_UNAVAILABLE = 'SOURCE_UNAVAILABLE', 'Source Unavailable (Legacy)'
+    DEADLINE_CONFIRMATION_NEEDED = 'DEADLINE_CONFIRMATION_NEEDED', 'Deadline Needs Confirmation (Legacy)'
+    EXPIRED = 'EXPIRED', 'Expired / Closed (Legacy)'
+    DISCONTINUED = 'DISCONTINUED', 'Discontinued (Legacy)'
+    ARCHIVED = 'ARCHIVED', 'Archived (Legacy)'
 
 class ReliabilityStatus(models.TextChoices):
     HIGH = 'HIGH', 'High (Official Portal / Gazette)'
@@ -174,7 +183,7 @@ class Opportunity(models.Model):
     source_organization = models.CharField(max_length=255, default='Government of India')
     source_verification_date = models.DateField(null=True, blank=True)
     last_verified_date = models.DateTimeField(null=True, blank=True)
-    verification_status = models.CharField(max_length=50, choices=VerificationStatus.choices, default=VerificationStatus.OFFICIAL_VERIFIED)
+    verification_status = models.CharField(max_length=50, choices=VerificationStatus.choices, default=VerificationStatus.PENDING_VERIFICATION)
     reliability_status = models.CharField(max_length=30, choices=ReliabilityStatus.choices, default=ReliabilityStatus.HIGH)
 
     # Structured JSON rules for custom workflow & RAG

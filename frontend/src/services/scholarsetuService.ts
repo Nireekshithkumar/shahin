@@ -18,6 +18,10 @@ export const authService = {
     const res = await apiClient.get('/auth/me/');
     return res.data;
   },
+  async changePassword(old_password: string, new_password: string) {
+    const res = await apiClient.post('/auth/change-password/', { old_password, new_password });
+    return res.data;
+  },
   async googleAuth(credential: string) {
     const res = await apiClient.post('/auth/google/', { credential });
     return res.data;
@@ -76,6 +80,41 @@ export const opportunityService = {
     const res = await apiClient.post('/opportunities/', data);
     return res.data;
   },
+  async updateOpportunity(id: number | string, data: any): Promise<Opportunity> {
+    const res = await apiClient.patch(`/opportunities/${id}/`, data);
+    return res.data;
+  },
+  async deleteOpportunity(id: number | string) {
+    const res = await apiClient.delete(`/opportunities/${id}/`);
+    return res.data;
+  },
+  async verifyOpportunity(id: number | string) {
+    const res = await apiClient.post(`/opportunities/${id}/verify/`);
+    return res.data;
+  },
+  async rejectOpportunity(id: number | string) {
+    const res = await apiClient.post(`/opportunities/${id}/reject/`);
+    return res.data;
+  },
+  async publishOpportunity(id: number | string) {
+    const res = await apiClient.post(`/opportunities/${id}/publish/`);
+    return res.data;
+  },
+  async unpublishOpportunity(id: number | string) {
+    const res = await apiClient.post(`/opportunities/${id}/unpublish/`);
+    return res.data;
+  },
+  async calculateBenefit(data: {
+    opportunity_id?: number;
+    opportunity_ids?: number[];
+    education_level?: string;
+    is_hosteller?: boolean;
+    course_years?: number;
+    annual_income?: number;
+  }) {
+    const res = await apiClient.post('/opportunities/calculate-benefit/', data);
+    return res.data;
+  },
 };
 
 export const eligibilityService = {
@@ -127,9 +166,96 @@ export const applicationService = {
   },
 };
 
+export const documentService = {
+  async getDocuments(): Promise<any[]> {
+    const res = await apiClient.get('/profile/documents/');
+    return res.data;
+  },
+  async uploadDocument(file: File, documentType?: string) {
+    const formData = new FormData();
+    formData.append('document_file', file);
+    if (documentType) {
+      formData.append('document_type', documentType);
+    }
+    const res = await apiClient.post('/profile/documents/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
+  async deleteDocument(id: number) {
+    const res = await apiClient.delete(`/profile/documents/${id}/`);
+    return res.data;
+  },
+  async checkReadiness(opportunityId: number) {
+    const res = await apiClient.get('/profile/documents/readiness/', {
+      params: { opportunity_id: opportunityId },
+    });
+    return res.data;
+  },
+};
+
+export const familyService = {
+  async getFamilyMembers(): Promise<any[]> {
+    const res = await apiClient.get('/profile/family/');
+    return res.data;
+  },
+  async createFamilyMember(data: any): Promise<any> {
+    const res = await apiClient.post('/profile/family/', data);
+    return res.data;
+  },
+  async updateFamilyMember(id: number, data: any): Promise<any> {
+    const res = await apiClient.patch(`/profile/family/${id}/`, data);
+    return res.data;
+  },
+  async deleteFamilyMember(id: number) {
+    const res = await apiClient.delete(`/profile/family/${id}/`);
+    return res.data;
+  },
+  async getFamilySchemes(memberId: number): Promise<any> {
+    const res = await apiClient.get(`/profile/family/${memberId}/schemes/`);
+    return res.data;
+  },
+};
+
 export const aiAssistantService = {
   async sendMessage(message: string, conversationId?: string) {
     const res = await apiClient.post('/ai/chat/', { message, conversation_id: conversationId });
+    return res.data;
+  },
+  async queryVoiceAssistant(query: string, language: string = 'en') {
+    const res = await apiClient.post('/ai/voice-assistant/', { query, language });
+    return res.data;
+  },
+  async voiceAssistant(query: string, language: string = 'en') {
+    const res = await apiClient.post('/ai/voice-assistant/', { query, language });
+    return res.data;
+  },
+  async explainFormField(fieldName: string, opportunityId?: number) {
+    const res = await apiClient.post('/ai/form-assistant/', { field_name: fieldName, opportunity_id: opportunityId });
+    return res.data;
+  },
+  async formAssistant(data: { opportunity_name?: string; field_name: string; user_profile_context?: any }) {
+    const res = await apiClient.post('/ai/form-assistant/', data);
+    return res.data;
+  },
+  async analyzeRejection(rejectionText: string, file?: File, opportunityId?: number) {
+    const formData = new FormData();
+    formData.append('rejection_text', rejectionText);
+    if (file) {
+      formData.append('rejection_file', file);
+    }
+    if (opportunityId) {
+      formData.append('opportunity_id', String(opportunityId));
+    }
+    const res = await apiClient.post('/ai/rejection-analyzer/', formData, {
+      headers: file ? { 'Content-Type': 'multipart/form-data' } : {},
+    });
+    return res.data;
+  },
+  async rejectionAnalyzer(formData: FormData) {
+    const res = await apiClient.post('/ai/rejection-analyzer/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return res.data;
   },
   async getConversations() {
@@ -285,6 +411,18 @@ export const adminService = {
   },
   async previewTemplate(templateType: string) {
     const res = await apiClient.get(`/notifications/admin/templates/${templateType}/preview/`);
+    return res.data;
+  },
+  async getUsers(search?: string) {
+    const res = await apiClient.get('/admin-hub/users/', { params: search ? { search } : {} });
+    return res.data;
+  },
+  async toggleUserStatus(userId: number, isActive: boolean) {
+    const res = await apiClient.patch('/admin-hub/users/', { user_id: userId, is_active: isActive });
+    return res.data;
+  },
+  async getAuditLogs() {
+    const res = await apiClient.get('/admin-hub/audit-logs/');
     return res.data;
   },
 };

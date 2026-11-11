@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.profiles.models import UserProfile
+from apps.profiles.models import UserProfile, UserDocument, FamilyMemberProfile
 
 class UserProfileSerializer(serializers.ModelSerializer):
     missing_fields = serializers.SerializerMethodField()
@@ -25,3 +25,41 @@ class UserProfileSerializer(serializers.ModelSerializer):
     def get_missing_fields(self, obj):
         _, missing = obj.calculate_completeness()
         return missing
+
+class UserDocumentSerializer(serializers.ModelSerializer):
+    document_type_display = serializers.CharField(source='get_document_type_display', read_only=True)
+    readability_status_display = serializers.CharField(source='get_readability_status_display', read_only=True)
+
+    class Meta:
+        model = UserDocument
+        fields = [
+            'id', 'document_type', 'document_type_display', 'document_file',
+            'original_filename', 'file_size_bytes', 'mime_type',
+            'readability_status', 'readability_status_display',
+            'detected_financial_year', 'detected_expiry_date', 'is_expired',
+            'masked_identifier', 'ocr_confidence', 'analysis_notes',
+            'uploaded_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'original_filename', 'file_size_bytes', 'mime_type',
+            'readability_status', 'detected_financial_year', 'detected_expiry_date',
+            'is_expired', 'masked_identifier', 'ocr_confidence', 'analysis_notes',
+            'uploaded_at', 'updated_at'
+        ]
+
+class FamilyMemberProfileSerializer(serializers.ModelSerializer):
+    relationship_display = serializers.CharField(source='get_relationship_display', read_only=True)
+    gender_display = serializers.CharField(source='get_gender_display', read_only=True)
+    education_level_display = serializers.CharField(source='get_education_level_display', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+
+    class Meta:
+        model = FamilyMemberProfile
+        fields = [
+            'id', 'name', 'relationship', 'relationship_display', 'age',
+            'gender', 'gender_display', 'education_level', 'education_level_display',
+            'occupation', 'state_or_ut', 'district', 'annual_income',
+            'category', 'category_display', 'is_disabled', 'disability_percentage',
+            'is_bpl_card_holder', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']

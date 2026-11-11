@@ -688,65 +688,10 @@ class Command(BaseCommand):
         )
 
         # -------------------------------------------------------------
-        # Seed default demo accounts for instant login
+        # Initialize Single Authorized Administrator (admin@gamil.com)
         # -------------------------------------------------------------
-        self.stdout.write("Seeding default demo accounts (admin and student)...")
-        from apps.accounts.models import User, UserRole
-        from apps.profiles.models import UserProfile
+        self.stdout.write("Initializing single authorized administrator account...")
+        from django.core.management import call_command
+        call_command('bootstrap_admin')
 
-        # 1. Platform Admin
-        admin_user, _ = User.objects.get_or_create(
-            email='admin@scholarsetu.gov.in',
-            defaults={
-                'username': 'admin',
-                'role': UserRole.ADMIN,
-                'is_staff': True,
-                'is_superuser': True,
-                'is_email_verified': True,
-            }
-        )
-        admin_user.set_password('ScholarSetu@2026')
-        admin_user.first_name = 'Platform'
-        admin_user.last_name = 'Administrator'
-        admin_user.role = UserRole.ADMIN
-        admin_user.is_staff = True
-        admin_user.is_superuser = True
-        admin_user.is_email_verified = True
-        admin_user.save()
-        UserProfile.objects.get_or_create(user=admin_user, defaults={'full_name': 'Platform Administrator'})
-
-        # 2. Demo Student (Rohan Sharma)
-        student_user, _ = User.objects.get_or_create(
-            email='student.rohan@scholarsetu.gov.in',
-            defaults={
-                'username': 'rohan_sharma',
-                'role': UserRole.CITIZEN,
-                'is_staff': False,
-                'is_superuser': False,
-                'is_email_verified': True,
-            }
-        )
-        student_user.set_password('ScholarSetu@2026')
-        student_user.first_name = 'Rohan'
-        student_user.last_name = 'Sharma'
-        student_user.role = UserRole.CITIZEN
-        student_user.is_email_verified = True
-        student_user.save()
-
-        # Student Profile
-        UserProfile.objects.get_or_create(
-            user=student_user,
-            defaults={
-                'full_name': 'Rohan Sharma',
-                'domicile_state': 'Karnataka',
-                'state_or_ut': 'Karnataka',
-                'current_education_level': 'UNDERGRADUATE',
-                'gender': 'MALE',
-                'category': 'OBC',
-                'annual_family_income': Decimal('250000.00'),
-                'course_name': 'B.Tech Computer Science',
-                'academic_percentage': Decimal('84.50'),
-            }
-        )
-
-        self.stdout.write(self.style.SUCCESS("All seed data, workflow templates, and demo accounts successfully initialized!"))
+        self.stdout.write(self.style.SUCCESS("All seed data, workflow templates, and administrator account successfully initialized!"))

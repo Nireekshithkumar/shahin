@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
-  Search, Filter, SlidersHorizontal, MapPin, GraduationCap,
-  Calendar, CheckCircle2, Bookmark, ExternalLink, X, ShieldCheck,
-  ChevronDown, LayoutGrid, List as ListIcon, AlertCircle, FileText
+  Search, Filter, MapPin, GraduationCap,
+  Calendar, Bookmark, ExternalLink, X, ShieldCheck,
+  LayoutGrid, List as ListIcon, FileText, ArrowRight
 } from 'lucide-react';
 import { opportunityService, applicationService } from '../services/scholarsetuService';
 import { Opportunity } from '../types';
@@ -20,14 +20,11 @@ export const ScholarshipsPage: React.FC = () => {
   const [selectedOpp, setSelectedOpp] = useState<Opportunity | null>(null);
   const [savedIds, setSavedIds] = useState<Set<number>>(new Set());
 
-  // Filters state
+  // Filter parameters
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [state, setState] = useState(searchParams.get('state') || 'All');
   const [eduLevel, setEduLevel] = useState(searchParams.get('education_level') || 'ALL');
   const [category, setCategory] = useState(searchParams.get('category') || 'ALL');
-  const [gender, setGender] = useState(searchParams.get('gender') || 'ALL');
-  const [govLevel, setGovLevel] = useState(searchParams.get('gov_level') || 'ALL');
-  const [disability, setDisability] = useState(searchParams.get('disability') === 'true');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'default');
 
   const indianStates = [
@@ -39,14 +36,11 @@ export const ScholarshipsPage: React.FC = () => {
   const fetchOpportunities = async () => {
     setLoading(true);
     try {
-      const params: Record<string, any> = {};
+      const params: Record<string, any> = { opportunity_type: 'SCHOLARSHIP' };
       if (search) params.search = search;
       if (state !== 'All') params.state = state;
       if (eduLevel !== 'ALL') params.education_level = eduLevel;
       if (category !== 'ALL') params.category = category;
-      if (gender !== 'ALL') params.gender = gender;
-      if (govLevel !== 'ALL') params.gov_level = govLevel;
-      if (disability) params.disability = 'true';
       if (sortBy !== 'default') params.sort = sortBy;
 
       const data = await opportunityService.getOpportunities(params);
@@ -66,7 +60,7 @@ export const ScholarshipsPage: React.FC = () => {
         setSavedIds(new Set(res.map((item) => item.opportunity)));
       }).catch(() => {});
     }
-  }, [state, eduLevel, category, gender, govLevel, disability, sortBy]);
+  }, [state, eduLevel, category, sortBy]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,62 +93,57 @@ export const ScholarshipsPage: React.FC = () => {
     setState('All');
     setEduLevel('ALL');
     setCategory('ALL');
-    setGender('ALL');
-    setGovLevel('ALL');
-    setDisability(false);
     setSortBy('default');
     setSearchParams({});
   };
 
-  const hasActiveFilters = search || state !== 'All' || eduLevel !== 'ALL' || category !== 'ALL' || gender !== 'ALL' || govLevel !== 'ALL' || disability;
+  const hasActiveFilters = search || state !== 'All' || eduLevel !== 'ALL' || category !== 'ALL';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-[#000000]">
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-          Indian Scholarships & Financial Assistance Directory
+      <div className="mb-6 pb-4 border-b border-[#D2D2D4]">
+        <h1 className="text-2xl font-bold tracking-tight text-[#000000]">
+          Scholarships Directory
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Explore genuine central, state, and foundation scholarships verified from official government portals.
+        <p className="text-xs text-[#000000]/60 mt-1">
+          Explore genuine central, state, and institutional scholarships verified against official government circulars.
         </p>
       </div>
 
-      {/* Search and Filter Control Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-6">
+      {/* Search and Filter Panel */}
+      <div className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-4 mb-6">
         <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-3">
           <div className="flex-1 relative flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3" />
+            <Search className="w-4 h-4 text-[#000000]/40 absolute left-3.5" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by scholarship name, eligibility criteria, department, or course..."
-              className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              placeholder="Search by scholarship title, department, or eligible course..."
+              className="w-full pl-10 pr-3 py-2 text-xs bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4] rounded-lg focus:outline-none focus:border-[#FF634A]"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* State filter */}
             <select
               value={state}
               onChange={(e) => setState(e.target.value)}
-              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-medium focus:outline-none"
+              className="px-3 py-2 text-xs bg-[#FFFFFF] border border-[#D2D2D4] rounded-lg text-[#000000] font-medium focus:border-[#FF634A]"
             >
               {indianStates.map((st) => (
                 <option key={st} value={st}>
-                  {st === 'All' ? 'All States' : st}
+                  {st === 'All' ? 'All Jurisdictions' : st}
                 </option>
               ))}
             </select>
 
-            {/* Education level */}
             <select
               value={eduLevel}
               onChange={(e) => setEduLevel(e.target.value)}
-              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-medium focus:outline-none"
+              className="px-3 py-2 text-xs bg-[#FFFFFF] border border-[#D2D2D4] rounded-lg text-[#000000] font-medium focus:border-[#FF634A]"
             >
-              <option value="ALL">All Degrees</option>
+              <option value="ALL">All Education Levels</option>
               <option value="UNDERGRADUATE">Undergraduate (UG)</option>
               <option value="POSTGRADUATE">Postgraduate (PG)</option>
               <option value="DIPLOMA">Diploma</option>
@@ -163,11 +152,10 @@ export const ScholarshipsPage: React.FC = () => {
               <option value="PHD_RESEARCH">PhD / Research</option>
             </select>
 
-            {/* Category */}
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-medium focus:outline-none"
+              className="px-3 py-2 text-xs bg-[#FFFFFF] border border-[#D2D2D4] rounded-lg text-[#000000] font-medium focus:border-[#FF634A]"
             >
               <option value="ALL">All Categories</option>
               <option value="GENERAL">General</option>
@@ -177,30 +165,18 @@ export const ScholarshipsPage: React.FC = () => {
               <option value="EWS">EWS</option>
             </select>
 
-            {/* Sort by */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2 text-xs border border-slate-200 rounded-xl bg-slate-50 text-slate-700 font-medium focus:outline-none"
-            >
-              <option value="default">Sort: Default</option>
-              <option value="deadline">Closing Soonest</option>
-              <option value="benefit">Highest Benefit</option>
-              <option value="recent">Recently Added</option>
-            </select>
-
             <button
               type="submit"
-              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition-all"
+              className="px-4 py-2 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] font-bold text-xs transition-colors"
             >
-              Search
+              Filter
             </button>
 
             {hasActiveFilters && (
               <button
                 type="button"
                 onClick={clearFilters}
-                className="px-3 py-2 rounded-xl text-xs text-red-600 font-semibold hover:bg-red-50 flex items-center gap-1 transition-colors"
+                className="px-3 py-2 rounded-lg text-xs font-semibold text-[#000000]/70 hover:text-[#000000] bg-[#FFFFFF] border border-[#D2D2D4] flex items-center gap-1"
               >
                 <X className="w-3.5 h-3.5" /> Clear
               </button>
@@ -208,22 +184,29 @@ export const ScholarshipsPage: React.FC = () => {
           </div>
         </form>
 
-        {/* View Mode Toggle and Result Count */}
-        <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 text-xs text-slate-500">
+        <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#D2D2D4] text-xs text-[#000000]/60">
           <p>
-            Showing <strong className="text-slate-800">{opportunities.length}</strong> opportunities
+            Total Records: <strong className="text-[#000000]">{opportunities.length}</strong>
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg ${viewMode === 'grid' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-1.5 rounded-md border ${
+                viewMode === 'grid'
+                  ? 'bg-[#FF634A] text-[#FFFFFF] border-[#FF634A]'
+                  : 'bg-[#FFFFFF] text-[#000000] border-[#D2D2D4]'
+              }`}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg ${viewMode === 'list' ? 'bg-brand-50 text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-1.5 rounded-md border ${
+                viewMode === 'list'
+                  ? 'bg-[#FF634A] text-[#FFFFFF] border-[#FF634A]'
+                  : 'bg-[#FFFFFF] text-[#000000] border-[#D2D2D4]'
+              }`}
               title="List View"
             >
               <ListIcon className="w-4 h-4" />
@@ -232,43 +215,43 @@ export const ScholarshipsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Opportunities List / Grid */}
+      {/* Grid / List Results */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-64 rounded-2xl bg-white border border-slate-200 animate-pulse" />
+            <div key={i} className="h-48 rounded-xl bg-[#E7E7E7] animate-pulse" />
           ))}
         </div>
       ) : opportunities.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200 p-8">
-          <GraduationCap className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="text-base font-bold text-slate-800">No matching scholarships found</h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-4">
-            Try adjusting your search filters or clearing the category and education level constraints.
+        <div className="text-center py-16 bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-8">
+          <GraduationCap className="w-10 h-10 text-[#000000]/30 mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-[#000000]">No scholarships match the selected criteria</h3>
+          <p className="text-xs text-[#000000]/60 max-w-sm mx-auto mt-1 mb-4">
+            Try adjusting your search terms or clearing state and category filters.
           </p>
           <button
             onClick={clearFilters}
-            className="px-4 py-2 rounded-xl bg-brand-600 text-white font-bold text-xs"
+            className="px-4 py-2 rounded-lg bg-[#FF634A] text-[#FFFFFF] font-bold text-xs"
           >
-            Clear All Filters
+            Clear Filters
           </button>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {opportunities.map((opp) => (
             <div
               key={opp.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-5 flex flex-col justify-between hover:border-[#000000] transition-colors"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-brand-50 text-brand-700 border border-brand-200">
-                    {opp.applicable_state}
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4]">
+                    {opp.applicable_state || 'All India'}
                   </span>
                   <button
                     onClick={() => handleBookmarkToggle(opp)}
-                    className={`p-1.5 rounded-md text-slate-400 hover:text-brand-600 transition-colors ${
-                      savedIds.has(opp.id) ? 'text-brand-600 bg-brand-50' : ''
+                    className={`p-1 rounded-md text-[#000000]/60 hover:text-[#FF634A] ${
+                      savedIds.has(opp.id) ? 'text-[#FF634A]' : ''
                     }`}
                     title="Bookmark"
                   >
@@ -276,40 +259,40 @@ export const ScholarshipsPage: React.FC = () => {
                   </button>
                 </div>
 
-                <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-2">
+                <h3 className="font-bold text-[#000000] text-xs line-clamp-2 mb-1">
                   {opp.title}
                 </h3>
-                <p className="text-xs text-slate-500 font-medium mb-3">{opp.provider}</p>
+                <p className="text-[11px] text-[#000000]/60 mb-3 truncate">{opp.provider}</p>
 
-                <p className="text-xs text-slate-600 line-clamp-3 mb-4 leading-relaxed">
+                <p className="text-xs text-[#000000]/70 line-clamp-3 mb-4 leading-relaxed">
                   {opp.short_description}
                 </p>
 
-                <div className="flex flex-wrap gap-1.5 mb-4 text-[10px]">
+                <div className="flex flex-wrap gap-1 mb-4 text-[10px]">
                   {opp.education_levels?.map((lvl) => (
-                    <span key={lvl} className="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold">
+                    <span key={lvl} className="px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4]">
                       {lvl.replace('_', ' ')}
                     </span>
                   ))}
                   {opp.max_annual_income && (
-                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-semibold border border-amber-200">
+                    <span className="px-1.5 py-0.5 rounded bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4]">
                       Income &lt; ₹{Number(opp.max_annual_income).toLocaleString('en-IN')}
                     </span>
                   )}
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-3 border-t border-[#D2D2D4] flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-medium">Financial Benefit</p>
-                  <p className="text-xs font-black text-emerald-600">
-                    {opp.benefit_amount ? `₹${Number(opp.benefit_amount).toLocaleString('en-IN')}` : 'Direct Grant'}
-                  </p>
+                  <span className="text-[10px] font-bold uppercase text-[#000000]/50 block">Benefit</span>
+                  <span className="text-xs font-bold text-[#000000]">
+                    {opp.benefit_amount ? `₹${Number(opp.benefit_amount).toLocaleString('en-IN')}` : opp.benefit_description || 'Grant'}
+                  </span>
                 </div>
 
                 <button
                   onClick={() => setSelectedOpp(opp)}
-                  className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-all shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] text-xs font-bold transition-colors"
                 >
                   View Details
                 </button>
@@ -318,37 +301,36 @@ export const ScholarshipsPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {opportunities.map((opp) => (
             <div
               key={opp.id}
-              className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+              className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-[#000000] transition-colors"
             >
               <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-brand-50 text-brand-700">
-                    {opp.applicable_state}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FFFFFF] text-[#000000] border border-[#D2D2D4]">
+                    {opp.applicable_state || 'All India'}
                   </span>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs text-slate-500 font-medium">{opp.provider}</span>
+                  <span className="text-xs text-[#000000]/60 truncate">{opp.provider}</span>
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm mb-1">{opp.title}</h3>
-                <p className="text-xs text-slate-600 line-clamp-2 max-w-3xl">{opp.short_description}</p>
+                <h3 className="font-bold text-[#000000] text-xs mb-1">{opp.title}</h3>
+                <p className="text-xs text-[#000000]/70 line-clamp-2">{opp.short_description}</p>
               </div>
 
               <div className="flex items-center gap-4 sm:flex-shrink-0">
                 <div className="text-right">
-                  <p className="text-xs font-black text-emerald-600">
-                    {opp.benefit_amount ? `₹${Number(opp.benefit_amount).toLocaleString('en-IN')}` : 'Full Waiver'}
+                  <p className="text-xs font-bold text-[#000000]">
+                    {opp.benefit_amount ? `₹${Number(opp.benefit_amount).toLocaleString('en-IN')}` : 'Grant'}
                   </p>
-                  <p className="text-[10px] text-slate-400">Deadline: {opp.application_closing_date || 'Open'}</p>
+                  <p className="text-[10px] text-[#000000]/60">Deadline: {opp.application_closing_date || 'Open'}</p>
                 </div>
 
                 <button
                   onClick={() => setSelectedOpp(opp)}
-                  className="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-sm"
+                  className="px-3 py-1.5 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] text-xs font-bold"
                 >
-                  View Details
+                  Details
                 </button>
               </div>
             </div>
@@ -356,83 +338,70 @@ export const ScholarshipsPage: React.FC = () => {
         </div>
       )}
 
-      {/* DETAIL DRAWER / MODAL */}
+      {/* DETAIL MODAL */}
       {selectedOpp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col">
-            {/* Header */}
-            <div className="p-5 border-b border-slate-100 flex items-start justify-between bg-slate-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#000000]/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-2xl bg-[#F4F4F6] rounded-xl border border-[#D2D2D4] overflow-hidden max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="p-5 border-b border-[#D2D2D4] flex items-start justify-between bg-[#E7E7E7]">
               <div>
-                <span className="px-2.5 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800">
-                  {selectedOpp.government_level} Government Scheme
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#000000] text-[#FFFFFF]">
+                  {selectedOpp.government_level || 'GOVERNMENT'} SCHEME
                 </span>
-                <h2 className="text-base font-bold text-slate-900 mt-1">{selectedOpp.title}</h2>
-                <p className="text-xs text-slate-500 font-medium">{selectedOpp.provider}</p>
+                <h2 className="text-sm font-bold text-[#000000] mt-1.5">{selectedOpp.title}</h2>
+                <p className="text-xs text-[#000000]/60">{selectedOpp.provider}</p>
               </div>
               <button
                 onClick={() => setSelectedOpp(null)}
-                className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200"
+                className="p-1 rounded-md text-[#000000]/60 hover:text-[#000000] hover:bg-[#D2D2D4]"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Scrollable body */}
-            <div className="p-6 overflow-y-auto space-y-5 text-xs text-slate-700">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs text-[#000000]">
               <div>
-                <h4 className="font-bold text-slate-900 mb-1">Detailed Description</h4>
-                <p className="leading-relaxed text-slate-600">{selectedOpp.detailed_description || selectedOpp.short_description}</p>
+                <h4 className="font-bold text-[#000000] mb-1">Detailed Description</h4>
+                <p className="leading-relaxed text-[#000000]/80">{selectedOpp.detailed_description || selectedOpp.short_description}</p>
               </div>
 
-              {/* Benefit & Key Info */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-brand-50/50 border border-brand-100">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-lg bg-[#E7E7E7] border border-[#D2D2D4]">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase">Financial Assistance</p>
-                  <p className="font-black text-emerald-700 text-sm mt-0.5">
-                    {selectedOpp.benefit_amount ? `₹${Number(selectedOpp.benefit_amount).toLocaleString('en-IN')}` : 'Direct Grant'}
+                  <p className="text-[10px] text-[#000000]/50 font-bold uppercase">Benefit</p>
+                  <p className="font-bold text-[#000000] text-xs mt-0.5">
+                    {selectedOpp.benefit_amount ? `₹${Number(selectedOpp.benefit_amount).toLocaleString('en-IN')}` : 'Full Waiver'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase">Application Deadline</p>
-                  <p className="font-bold text-slate-800 text-xs mt-0.5">{selectedOpp.application_closing_date || 'Open'}</p>
+                  <p className="text-[10px] text-[#000000]/50 font-bold uppercase">Deadline</p>
+                  <p className="font-bold text-[#000000] text-xs mt-0.5">{selectedOpp.application_closing_date || 'Open'}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-semibold uppercase">Source Reliability</p>
-                  <p className="font-bold text-emerald-700 text-xs mt-0.5 flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5" /> High (Official)
-                  </p>
+                  <p className="text-[10px] text-[#000000]/50 font-bold uppercase">Verification</p>
+                  <p className="font-bold text-[#FF634A] text-xs mt-0.5">Official Source</p>
                 </div>
               </div>
 
-              {/* Eligibility Rules */}
               <div>
-                <h4 className="font-bold text-slate-900 mb-2">Eligibility Rules</h4>
-                <ul className="space-y-1.5 text-xs text-slate-600 list-disc list-inside">
-                  <li><strong>Applicable State:</strong> {selectedOpp.applicable_state}</li>
+                <h4 className="font-bold text-[#000000] mb-2">Eligibility Conditions</h4>
+                <ul className="space-y-1 text-xs text-[#000000]/80 list-disc list-inside">
+                  <li><strong>Jurisdiction:</strong> {selectedOpp.applicable_state || 'All India'}</li>
                   {selectedOpp.education_levels && (
-                    <li><strong>Degree Level:</strong> {selectedOpp.education_levels.join(', ').replace(/_/g, ' ')}</li>
+                    <li><strong>Education Levels:</strong> {selectedOpp.education_levels.join(', ').replace(/_/g, ' ')}</li>
                   )}
                   {selectedOpp.max_annual_income && (
-                    <li><strong>Annual Family Income Cap:</strong> Below ₹{Number(selectedOpp.max_annual_income).toLocaleString('en-IN')}</li>
-                  )}
-                  {selectedOpp.min_academic_percentage && (
-                    <li><strong>Academic Score Cutoff:</strong> Minimum {selectedOpp.min_academic_percentage}% in qualifying exam</li>
-                  )}
-                  {selectedOpp.eligible_categories && (
-                    <li><strong>Eligible Categories:</strong> {selectedOpp.eligible_categories.join(', ')}</li>
+                    <li><strong>Income Limit:</strong> Below ₹{Number(selectedOpp.max_annual_income).toLocaleString('en-IN')}</li>
                   )}
                 </ul>
               </div>
 
-              {/* Required Documents */}
               {selectedOpp.required_documents && selectedOpp.required_documents.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-slate-900 mb-2">Required Documents</h4>
+                  <h4 className="font-bold text-[#000000] mb-2">Required Documents</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {selectedOpp.required_documents.map((doc, idx) => (
-                      <div key={idx} className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-2">
-                        <FileText className="w-3.5 h-3.5 text-brand-600 flex-shrink-0" />
-                        <span className="text-[11px] font-medium text-slate-700">{doc}</span>
+                      <div key={idx} className="p-2 rounded bg-[#E7E7E7] border border-[#D2D2D4] flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-[#FF634A] flex-shrink-0" />
+                        <span className="text-[11px] font-medium text-[#000000]">{doc}</span>
                       </div>
                     ))}
                   </div>
@@ -440,24 +409,22 @@ export const ScholarshipsPage: React.FC = () => {
               )}
             </div>
 
-            {/* Modal Footer with Official Application link */}
-            <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-              <span className="text-[11px] text-slate-500">Source: {selectedOpp.source_name}</span>
+            <div className="p-4 border-t border-[#D2D2D4] bg-[#E7E7E7] flex items-center justify-between">
+              <span className="text-[11px] text-[#000000]/60">Source: {selectedOpp.source_name || 'Government Gazette'}</span>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleBookmarkToggle(selectedOpp)}
-                  className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 flex items-center gap-1.5"
+                  className="px-3 py-1.5 rounded-lg border border-[#D2D2D4] bg-[#FFFFFF] text-xs font-bold text-[#000000] hover:bg-[#D2D2D4]"
                 >
-                  <Bookmark className="w-3.5 h-3.5" />
                   {savedIds.has(selectedOpp.id) ? 'Saved' : 'Save'}
                 </button>
                 <a
-                  href={selectedOpp.official_application_url || selectedOpp.official_information_url || 'https://scholarships.gov.in'}
+                  href={selectedOpp.official_application_url || 'https://scholarships.gov.in'}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-saffron-600 hover:bg-saffron-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-1.5 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] font-bold text-xs flex items-center gap-1.5"
                 >
-                  Apply on Official Portal <ExternalLink className="w-3.5 h-3.5" />
+                  Official Portal <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </div>
             </div>

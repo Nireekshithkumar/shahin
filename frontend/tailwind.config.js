@@ -4,34 +4,33 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#bfdbfe',
-          300: '#93c5fd',
-          400: '#60a5fa',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#1e3a8a',
-          950: '#172554',
+        background: '#F4F4F6',
+        surface: '#E7E7E7',
+        border: '#D2D2D4',
+        accent: {
+          DEFAULT: '#FF634A',
+          hover: '#E5533D',
+          muted: 'rgba(255, 99, 74, 0.08)',
+          border: 'rgba(255, 99, 74, 0.3)',
         },
-        saffron: {
-          500: '#f97316',
-          600: '#ea580c',
+        primary: {
+          DEFAULT: '#FF634A',
+          hover: '#E5533D',
         },
-        indiaGreen: {
-          500: '#10b981',
-          600: '#059669',
-        }
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'Manrope', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        'sm': '4px',
+        DEFAULT: '6px',
+        'md': '8px',
+        'lg': '10px',
+        'xl': '12px',
+        '2xl': '16px',
       }
     },
   },

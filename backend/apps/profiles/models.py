@@ -126,3 +126,119 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.full_name or self.user.email} Profile ({self.profile_completion_percentage}%)"
+
+
+# ==============================================================================
+# Feature 1 & 5: AI Document Readiness Checker & Rejection Analyzer Model
+# ==============================================================================
+class DocumentTypeChoices(models.TextChoices):
+    INCOME_CERTIFICATE = 'INCOME_CERTIFICATE', 'Income Certificate'
+    CASTE_CERTIFICATE = 'CASTE_CERTIFICATE', 'Caste / Community Certificate'
+    DOMICILE_CERTIFICATE = 'DOMICILE_CERTIFICATE', 'Domicile / Residence Certificate'
+    DISABILITY_CERTIFICATE = 'DISABILITY_CERTIFICATE', 'Disability (PwD / UDID) Certificate'
+    MARKS_CARD = 'MARKS_CARD', 'Marks Card / Grade Sheet / Transcript'
+    AADHAAR_CARD = 'AADHAAR_CARD', 'Aadhaar / Identity Proof'
+    BANK_PASSBOOK = 'BANK_PASSBOOK', 'Bank Passbook / Cancelled Cheque'
+    REJECTION_LETTER = 'REJECTION_LETTER', 'Official Rejection Notice / Letter'
+    ADMISSION_RECEIPT = 'ADMISSION_RECEIPT', 'College Admission Proof / Fee Receipt'
+    RATION_CARD = 'RATION_CARD', 'Ration Card (BPL / AAY)'
+    OTHER = 'OTHER', 'Other Supporting Document'
+
+
+class ReadabilityChoices(models.TextChoices):
+    READABLE = 'READABLE', 'Clear & Fully Readable'
+    BLURRY = 'BLURRY', 'Partially Blurry / Low Quality'
+    UNREADABLE = 'UNREADABLE', 'Unreadable / Damaged'
+
+
+class UserDocument(models.Model):
+    """
+    Stores encrypted/safe reference to user-uploaded verification documents,
+    extracted text via OCR, document type classification, financial year and validity.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='documents')
+    document_type = models.CharField(
+        max_length=50,
+        choices=DocumentTypeChoices.choices,
+        default=DocumentTypeChoices.OTHER,
+        db_index=True
+    )
+    document_file = models.FileField(upload_to='user_documents/%Y/%m/')
+    original_filename = models.CharField(max_length=255)
+    file_size_bytes = models.PositiveIntegerField(default=0)
+    mime_type = models.CharField(max_length=100, default='application/pdf')
+
+    # OCR Extraction and Analysis
+    extracted_text = models.TextField(blank=True, help_text="OCR extracted text (sensitive numbers masked)")
+    readability_status = models.CharField(
+        max_length=30,
+        choices=ReadabilityChoices.choices,
+        default=ReadabilityChoices.READABLE
+    )
+    detected_financial_year = models.CharField(max_length=20, blank=True, help_text="e.g. 2024-2025")
+    detected_expiry_date = models.DateField(null=True, blank=True)
+    is_expired = models.BooleanField(default=False)
+    masked_identifier = models.CharField(max_length=100, blank=True, help_text="Masked certificate or Aadhaar reference")
+    ocr_confidence = models.FloatField(default=1.0)
+    analysis_notes = models.TextField(blank=True)
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.get_document_type_display()} ({self.original_filename})"
+
+
+# ==============================================================================
+# Feature 7: Family-Based Scheme Discovery Model
+# ==============================================================================
+class FamilyRelationship(models.TextChoices):
+    FATHER = 'FATHER', 'Father'
+    MOTHER = 'MOTHER', 'Mother'
+    BROTHER = 'BROTHER', 'Brother'
+    SISTER = 'SISTER', 'Sister'
+    SPOUSE = 'SPOUSE', 'Spouse'
+    CHILD = 'CHILD', 'Child / Son / Daughter'
+    GRANDPARENT = 'GRANDPARENT', 'Grandparent'
+    OTHER_DEPENDANT = 'OTHER_DEPENDANT', 'Other Dependant'
+
+
+class FamilyMemberProfile(models.Model):
+    """
+    Dedicated private profile for family members to discover scholarships for children,
+    farmer subsidies, pensions, women-focused schemes, and senior citizen benefits.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='family_members')
+    name = models.CharField(max_length=255)
+    relationship = models.CharField(max_length=30, choices=FamilyRelationship.choices)
+    age = models.PositiveIntegerField()
+    gender = models.CharField(max_length=30, choices=GenderChoices.choices)
+    education_level = models.CharField(
+        max_length=50,
+        choices=EducationLevel.choices,
+        default=EducationLevel.CLASS_1_10
+    )
+    occupation = models.CharField(
+        max_length=100,
+        default='Student',
+        help_text="e.g. Farmer, Senior Citizen, Homemaker, Student, Artisan, Unemployed"
+    )
+    state_or_ut = models.CharField(max_length=100, default='All India')
+    district = models.CharField(max_length=100, blank=True)
+    annual_income = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    category = models.CharField(max_length=20, choices=CategoryChoices.choices, default=CategoryChoices.GENERAL)
+    is_disabled = models.BooleanField(default=False)
+    disability_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    is_bpl_card_holder = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['relationship', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.get_relationship_display()}) for {self.user.email}"
+

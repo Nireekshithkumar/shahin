@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  GraduationCap, Search, Sparkles, Bell, User as UserIcon,
-  Menu, X, Bookmark, CheckCircle2, GitFork, Calendar, HelpCircle,
-  Shield, LogOut
+  Shield, Bell, User as UserIcon, Menu, X, Bookmark,
+  LogOut, FileCheck2, Calculator, Users2, Mic, CheckCircle,
+  HelpCircle, Compass, Layers, Clock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -16,17 +16,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
 
-  const navLinks = [
+  const isAdmin = user?.role === 'ADMIN';
+
+  const citizenNavLinks = [
     { name: 'Home', path: '/' },
     { name: 'Scholarships', path: '/scholarships' },
     { name: 'Govt Schemes', path: '/schemes' },
-    { name: 'Find My Eligibility', path: '/eligibility', highlight: true },
-    { name: 'AI Assistant', path: '/ai-assistant', icon: Sparkles },
-    { name: 'Workflow Builder', path: '/workflows' },
+    { name: 'Eligibility', path: '/eligibility' },
+    { name: 'Voice AI', path: '/ai-assistant', icon: Mic },
+    { name: 'Doc Checker', path: '/document-readiness', icon: FileCheck2 },
+    { name: 'Benefit Calc', path: '/benefit-calculator', icon: Calculator },
     { name: 'Tracker', path: '/tracker' },
+    { name: 'Family Schemes', path: '/family-discovery', icon: Users2 },
     { name: 'Deadlines', path: '/deadlines' },
-    { name: 'Admin Hub', path: '/admin-hub' },
   ];
+
+  const adminNavLinks = [
+    { name: 'Admin Hub', path: '/admin-hub', icon: Shield },
+    { name: 'Scholarships', path: '/scholarships' },
+    { name: 'Govt Schemes', path: '/schemes' },
+    { name: 'Workflow Engine', path: '/workflows' },
+  ];
+
+  const navLinks = isAdmin ? adminNavLinks : citizenNavLinks;
 
   const isActive = (p: string) => {
     if (p === '/' && location.pathname !== '/') return false;
@@ -34,104 +46,103 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-nav">
-      {/* Top tricolor micro-stripe */}
-      <div className="tricolor-stripe w-full" />
-      
+    <header className="sticky top-0 z-50 bg-[#F4F4F6] border-b border-[#D2D2D4]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-900 via-brand-700 to-saffron-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <GraduationCap className="w-6 h-6" />
+            <div className="w-9 h-9 rounded-md bg-[#000000] text-[#FFFFFF] flex items-center justify-center font-bold text-sm tracking-tight border border-[#D2D2D4] relative">
+              <span>SS</span>
+              <div className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#FF634A]" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl tracking-tight text-slate-900">
-                  Scholar<span className="text-brand-600">Setu</span>
+                <span className="font-bold text-base tracking-tight text-[#000000]">
+                  ScholarSetu
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
-                  AI
-                </span>
+                {isAdmin ? (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#000000] text-[#FFFFFF]">
+                    ADMIN
+                  </span>
+                ) : (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4]">
+                    GOVTECH
+                  </span>
+                )}
               </div>
-              <p className="text-[10px] text-slate-500 font-medium hidden sm:block">
-                Every Eligible Opportunity, One Platform
-              </p>
+              <span className="text-[10px] text-[#000000]/60 hidden sm:block font-medium">
+                National Discovery Platform
+              </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation Links */}
+          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => {
               const active = isActive(link.path);
               const Icon = link.icon;
               return (
                 <Link
-                  key={link.path}
+                  key={link.name}
                   to={link.path}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1.5 ${
                     active
-                      ? 'bg-brand-50 text-brand-700 border border-brand-200 shadow-sm'
-                      : link.highlight
-                      ? 'text-saffron-600 hover:bg-orange-50 font-bold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-[#FF634A]/10 text-[#FF634A] border border-[#FF634A]/30 font-semibold'
+                      : 'text-[#000000]/80 hover:text-[#000000] hover:bg-[#E7E7E7]'
                   }`}
                 >
-                  {Icon && <Icon className="w-3.5 h-3.5 text-brand-600" />}
+                  {Icon && <Icon className="w-3.5 h-3.5" />}
                   {link.name}
                 </Link>
               );
             })}
           </nav>
 
-          {/* Right Action Icons & Auth Profile */}
+          {/* Right Action Controls */}
           <div className="flex items-center gap-2">
-            {/* Notifications icon */}
+            {/* Notifications */}
             <Link
               to="/notifications"
-              className="p-2 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-slate-100 relative transition-colors"
+              className="p-2 rounded-md text-[#000000]/80 hover:text-[#000000] hover:bg-[#E7E7E7] relative transition-colors"
               title="Notifications"
             >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-saffron-500 rounded-full animate-ping" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-saffron-500 rounded-full" />
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-[#FF634A] rounded-full" />
             </Link>
 
-            {/* Saved bookmarks */}
-            <Link
-              to="/saved"
-              className="p-2 rounded-lg text-slate-600 hover:text-brand-600 hover:bg-slate-100 transition-colors hidden sm:block"
-              title="Saved Opportunities"
-            >
-              <Bookmark className="w-5 h-5" />
-            </Link>
+            {/* Saved Bookmarks */}
+            {!isAdmin && (
+              <Link
+                to="/saved"
+                className="p-2 rounded-md text-[#000000]/80 hover:text-[#000000] hover:bg-[#E7E7E7] transition-colors hidden sm:block"
+                title="Saved Opportunities"
+              >
+                <Bookmark className="w-4 h-4" />
+              </Link>
+            )}
 
-            {/* Profile or Login */}
+            {/* Profile or Sign In */}
             {user ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <div className="flex items-center gap-2 pl-2 border-l border-[#D2D2D4]">
                 <Link
-                  to="/profile"
-                  className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  to={isAdmin ? '/admin-hub' : '/profile'}
+                  className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-[#E7E7E7] transition-colors"
                 >
-                  {user.avatar_url ? (
-                    <img src={user.avatar_url} alt="User" className="w-7 h-7 rounded-full object-cover border border-brand-300" />
-                  ) : (
-                    <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-xs">
-                      {user.email.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="w-7 h-7 rounded-md bg-[#000000] text-[#FFFFFF] flex items-center justify-center font-bold text-xs border border-[#D2D2D4]">
+                    {user.email.charAt(0).toUpperCase()}
+                  </div>
                   <div className="hidden xl:block text-left leading-tight">
-                    <p className="text-xs font-bold text-slate-800 truncate max-w-[100px]">
-                      {profile?.full_name || user.email.split('@')[0]}
+                    <p className="text-xs font-bold text-[#000000] truncate max-w-[120px]">
+                      {isAdmin ? 'Administrator' : (profile?.full_name || user.email.split('@')[0])}
                     </p>
-                    <p className="text-[10px] text-emerald-600 font-semibold">
-                      {profile?.profile_completion_percentage ?? 0}% Complete
+                    <p className="text-[10px] text-[#000000]/60">
+                      {isAdmin ? 'System Admin' : 'Citizen Account'}
                     </p>
                   </div>
                 </Link>
                 <button
                   onClick={logout}
-                  className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  className="p-1.5 rounded-md text-[#000000]/60 hover:text-[#FF634A] hover:bg-[#E7E7E7] transition-colors"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
@@ -140,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             ) : (
               <button
                 onClick={onOpenAuth}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-md shadow-brand-500/25 transition-all active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF] font-semibold text-xs transition-colors"
               >
                 <UserIcon className="w-3.5 h-3.5" />
                 Sign In
@@ -150,38 +161,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             {/* Mobile menu toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden ml-1"
+              className="p-2 rounded-md text-[#000000] hover:bg-[#E7E7E7] lg:hidden ml-1"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-4 space-y-1 shadow-xl">
+        <div className="lg:hidden bg-[#F4F4F6] border-b border-[#D2D2D4] px-4 pt-2 pb-4 space-y-1">
           {navLinks.map((link) => (
             <Link
-              key={link.path}
+              key={link.name}
               to={link.path}
               onClick={() => setMobileMenuOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-medium ${
+              className={`block px-3 py-2 rounded-md text-xs font-medium ${
                 isActive(link.path)
-                  ? 'bg-brand-50 text-brand-700 font-bold'
-                  : 'text-slate-700 hover:bg-slate-100'
+                  ? 'bg-[#FF634A]/10 text-[#FF634A] border border-[#FF634A]/30 font-semibold'
+                  : 'text-[#000000]/80 hover:bg-[#E7E7E7] hover:text-[#000000]'
               }`}
             >
               {link.name}
             </Link>
           ))}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+          <div className="pt-2 border-t border-[#D2D2D4]">
             <Link
               to="/help"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-1 text-xs text-slate-500 font-medium py-1"
+              className="flex items-center gap-1.5 text-xs text-[#000000]/60 hover:text-[#000000] py-1"
             >
-              <HelpCircle className="w-4 h-4" /> Help Center & Portals
+              <HelpCircle className="w-4 h-4" /> Help Center & Guidelines
             </Link>
           </div>
         </div>

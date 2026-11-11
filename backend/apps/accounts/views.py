@@ -5,7 +5,10 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from apps.accounts.models import User, UserRole
-from apps.accounts.serializers import UserRegistrationSerializer, UserSerializer, GoogleAuthSerializer
+from apps.accounts.serializers import (
+    UserRegistrationSerializer, UserSerializer, GoogleAuthSerializer,
+    ChangePasswordSerializer
+)
 
 class RegisterView(views.APIView):
     permission_classes = [permissions.AllowAny]
@@ -263,4 +266,20 @@ class ResetPasswordView(views.APIView):
         return Response({
             'message': 'Password has been successfully updated. Please log in with your new password.'
         }, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(views.APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            if not user.check_password(serializer.validated_data['old_password']):
+                return Response({'error': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response({'message': 'Password updated successfully.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 

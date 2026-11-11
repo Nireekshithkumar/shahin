@@ -2,10 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class UserRole(models.TextChoices):
-    CITIZEN = 'CITIZEN', 'Student / Citizen'
-    REVIEWER = 'REVIEWER', 'Content Reviewer'
-    MANAGER = 'MANAGER', 'Opportunity Manager'
-    ADMIN = 'ADMIN', 'Platform Administrator'
+    ADMIN = 'ADMIN', 'Administrator'
+    CITIZEN = 'CITIZEN', 'Normal User'
 
 class User(AbstractUser):
     username = models.CharField(max_length=150, blank=True, null=True)
@@ -21,5 +19,18 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
 
+    @property
+    def is_admin_user(self):
+        return self.role == UserRole.ADMIN or self.is_superuser or self.is_staff
+
+    def save(self, *args, **kwargs):
+        if self.role == UserRole.ADMIN:
+            existing_admin = User.objects.filter(role=UserRole.ADMIN).exclude(pk=self.pk).first()
+            if existing_admin:
+                raise ValueError(f"Only one administrator account is authorized. Existing admin: {existing_admin.email}")
+            self.is_staff = True
+            self.is_superuser = True
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.email
+        return f"{self.email} ({self.role})"

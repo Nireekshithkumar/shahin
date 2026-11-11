@@ -3,14 +3,24 @@ from django.conf import settings
 from apps.opportunities.models import Opportunity
 
 class ApplicationStatusChoices(models.TextChoices):
+    # Standard 9 Workflow Statuses
+    NOT_APPLIED = 'NOT_APPLIED', 'Not Applied'
+    APPLIED = 'APPLIED', 'Applied'
+    SUBMITTED = 'SUBMITTED', 'Submitted'
+    DOCUMENTS_UNDER_VERIFICATION = 'DOCUMENTS_UNDER_VERIFICATION', 'Documents Under Verification'
+    PENDING_APPROVAL = 'PENDING_APPROVAL', 'Pending Approval'
+    APPROVED = 'APPROVED', 'Approved'
+    REJECTED = 'REJECTED', 'Rejected'
+    BENEFIT_RECEIVED = 'BENEFIT_RECEIVED', 'Benefit Received'
+    CLOSED = 'CLOSED', 'Closed'
+
+    # Backward compatibility choices
     INTERESTED = 'INTERESTED', 'Interested'
     PLANNING = 'PLANNING', 'Planning to Apply'
     DOCUMENTS_PENDING = 'DOCUMENTS_PENDING', 'Documents Pending'
     READY_TO_APPLY = 'READY_TO_APPLY', 'Ready to Apply'
     APPLICATION_SUBMITTED = 'APPLICATION_SUBMITTED', 'Application Submitted'
     UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
-    APPROVED = 'APPROVED', 'Approved'
-    REJECTED = 'REJECTED', 'Rejected'
     WITHDRAWN = 'WITHDRAWN', 'Withdrawn'
 
 class SavedOpportunity(models.Model):
@@ -29,8 +39,10 @@ class SavedOpportunity(models.Model):
 class ApplicationTracker(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tracked_applications')
     opportunity = models.ForeignKey(Opportunity, on_delete=models.CASCADE, related_name='applications')
-    status = models.CharField(max_length=50, choices=ApplicationStatusChoices.choices, default=ApplicationStatusChoices.INTERESTED)
+    status = models.CharField(max_length=50, choices=ApplicationStatusChoices.choices, default=ApplicationStatusChoices.NOT_APPLIED)
+    application_date = models.DateField(null=True, blank=True)
     submission_date = models.DateField(null=True, blank=True)
+    expected_benefit = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     application_reference_number = models.CharField(max_length=100, blank=True)
     personal_notes = models.TextField(blank=True)
     documents_checklist = models.JSONField(default=list, help_text="List of doc items with status")
