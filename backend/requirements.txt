@@ -1,0 +1,14 @@
+Django>=5.0,<5.2
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+djangorestframework-simplejwt>=5.3.0
+google-auth>=2.27.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+drf-spectacular>=0.27.0
+numpy>=2.0.0
+pydantic>=2.0.0
+celery>=5.3.6
+redis>=5.0.0
+openpyxl>=3.1.0       # Excel import/export support for admin CSV/XLSX upload
+psycopg2-binary>=2.9.0 # PostgreSQL adapter (binary, no build deps required)

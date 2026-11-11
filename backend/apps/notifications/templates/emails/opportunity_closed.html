@@ -1,0 +1,27 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge" style="background-color: #fee2e2; color: #991b1b;">APPLICATIONS CLOSED / EXPIRED</span>
+</div>
+
+<h1>Notice: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card" style="border-left-color: #ef4444; background-color: #fef2f2;">
+  <strong style="color: #991b1b;">Status: {{ status_reason|default:"The application window for this opportunity has concluded or the scheme has been officially closed." }}</strong>
+  <p style="margin: 6px 0 0 0; font-size: 13px; color: #7f1d1d;">
+    All active deadline reminders for this opportunity have been paused.
+  </p>
+</div>
+
+<p>
+  Don't worry &mdash; there are other active scholarships and schemes matching your profile on ScholarSetu AI.
+</p>
+
+<div style="margin: 24px 0 16px 0;">
+  <a href="{{ recommendations_url }}" class="btn btn-primary" target="_blank">Discover Other Matching Opportunities &rarr;</a>
+</div>
+{% endblock %}

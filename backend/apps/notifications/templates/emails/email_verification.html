@@ -1,0 +1,28 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-blue">ACCOUNT SECURITY</span>
+</div>
+
+<h1>Verify Your Email Address</h1>
+<p>Hello,</p>
+<p>
+  Thank you for registering on <strong>ScholarSetu AI</strong>. To start receiving verified scholarship deadline alerts, scheme announcements, and personalized eligibility matches, please confirm your email address.
+</p>
+
+<div style="margin: 28px 0; text-align: center;">
+  <a href="{{ verification_url }}" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;" target="_blank">Verify Email Address</a>
+</div>
+
+<div class="info-card">
+  <p style="font-size: 12px; margin: 0; color: #475569;">
+    If the button above does not work, copy and paste this verification URL into your browser:<br>
+    <a href="{{ verification_url }}" style="word-break: break-all; color: #2563eb;">{{ verification_url }}</a>
+  </p>
+</div>
+
+<p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">
+  This verification link will expire in 24 hours. If you did not create an account on ScholarSetu AI, you can safely ignore this message.
+</p>
+{% endblock %}

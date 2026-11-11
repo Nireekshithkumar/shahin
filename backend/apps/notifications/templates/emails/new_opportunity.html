@@ -1,0 +1,88 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-blue">{{ opportunity_category|default:"Scholarship" }}</span>
+  {% if is_eligibility_match %}
+  <span class="badge badge-green" style="margin-left: 6px;">Profile Match Verified</span>
+  {% endif %}
+</div>
+
+<h1>{{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Offered by: <strong>{{ opportunity.provider }}</strong> ({{ opportunity.get_government_level_display|default:opportunity.government_level }})
+</p>
+
+{% if match_explanation %}
+<div class="info-card-success">
+  <strong style="color: #166534; font-size: 14px;">Why this opportunity matches your profile:</strong>
+  <p style="margin: 6px 0 0 0; font-size: 13px; color: #14532d;">{{ match_explanation }}</p>
+</div>
+{% endif %}
+
+<p>{{ opportunity.short_description|default:opportunity.detailed_description|truncatewords:60 }}</p>
+
+<h2>Verified Opportunity Details</h2>
+<table class="meta-table">
+  <tr>
+    <td class="meta-label">Benefit Amount</td>
+    <td class="meta-value">
+      {% if opportunity.benefit_amount %}
+        &#8377; {{ opportunity.benefit_amount|floatformat:0 }} ({{ opportunity.get_benefit_frequency_display|default:opportunity.benefit_frequency }})
+      {% else %}
+        {{ opportunity.benefit_description|default:"As per official scheme norms" }}
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td class="meta-label">Applicable State / UT</td>
+    <td class="meta-value">{{ opportunity.applicable_state }}</td>
+  </tr>
+  <tr>
+    <td class="meta-label">Education Levels</td>
+    <td class="meta-value">
+      {% if opportunity.education_levels %}
+        {{ opportunity.education_levels|join:", " }}
+      {% else %}
+        Any Eligible Education Level
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td class="meta-label">Application Window</td>
+    <td class="meta-value">
+      {% if opportunity.application_opening_date %}
+        Opens: {{ opportunity.application_opening_date|date:"d M Y" }} &bull;
+      {% endif %}
+      {% if opportunity.application_closing_date %}
+        <strong>Deadline: {{ opportunity.application_closing_date|date:"d M Y" }}</strong>
+      {% else %}
+        Rolling / Ongoing
+      {% endif %}
+    </td>
+  </tr>
+  {% if opportunity.required_documents %}
+  <tr>
+    <td class="meta-label">Required Documents</td>
+    <td class="meta-value">{{ opportunity.required_documents|join:", " }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td class="meta-label">Source &amp; Provenance</td>
+    <td class="meta-value">{{ opportunity.source_name }} &bull; Last verified: {{ last_verified_date|default:"Recently Verified" }}</td>
+  </tr>
+</table>
+
+<div style="margin: 24px 0 16px 0;">
+  <a href="{{ opportunity_url }}" class="btn btn-primary" target="_blank">View on ScholarSetu AI</a>
+  {% if opportunity.official_application_url %}
+  <a href="{{ opportunity.official_application_url }}" class="btn btn-secondary" target="_blank">Official Application Portal &rarr;</a>
+  {% elif opportunity.official_information_url %}
+  <a href="{{ opportunity.official_information_url }}" class="btn btn-secondary" target="_blank">Official Guidelines &rarr;</a>
+  {% endif %}
+</div>
+
+<p style="font-size: 12px; color: #94a3b8; margin-top: 16px;">
+  Tip: Save this opportunity on ScholarSetu AI to track required documents and receive automatic countdown reminders before the deadline.
+</p>
+{% endblock %}

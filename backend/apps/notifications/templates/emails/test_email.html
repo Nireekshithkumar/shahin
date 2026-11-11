@@ -1,0 +1,32 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-green">SYSTEM VERIFICATION</span>
+</div>
+
+<h1>Notification System Test Email</h1>
+<p>
+  This is a verified test email dispatched from <strong>ScholarSetu AI</strong> to confirm your email notification settings and SMTP delivery channel.
+</p>
+
+<div class="info-card-success">
+  <strong style="color: #166534;">Channel Diagnostics &amp; Status:</strong>
+  <ul style="margin: 8px 0 0 0; padding-left: 20px; font-size: 13px; color: #14532d; line-height: 1.8;">
+    <li>Recipient Address: <strong>{{ recipient_email }}</strong></li>
+    <li>Dispatch Timestamp: <strong>{{ timestamp }}</strong></li>
+    <li>Preferred Language: <strong>{{ preferred_language|default:"English (en)" }}</strong></li>
+    <li>Configured Intervals: <strong>{{ reminder_intervals|join:", " }} Days Prior</strong></li>
+    <li>Timezone: <strong>{{ preferred_timezone }}</strong></li>
+  </ul>
+</div>
+
+<p>
+  Your email address is configured to receive verified notifications based on your notification preferences.
+</p>
+
+<div style="margin: 24px 0 16px 0;">
+  <a href="{{ preferences_url }}" class="btn btn-primary" target="_blank">Manage Preferences</a>
+  <a href="{{ portal_url }}" class="btn btn-secondary" target="_blank">Return to ScholarSetu AI</a>
+</div>
+{% endblock %}

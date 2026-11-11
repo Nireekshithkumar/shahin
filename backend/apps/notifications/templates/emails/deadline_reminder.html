@@ -1,0 +1,82 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-orange">
+    {% if days_remaining == 0 %}
+      DEADLINE TODAY
+    {% elif days_remaining == 1 %}
+      CLOSING TOMORROW
+    {% else %}
+      {{ days_remaining }} DAYS REMAINING
+    {% endif %}
+  </span>
+</div>
+
+<h1>Deadline Approaching: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card-urgent">
+  <div style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: #9a3412; font-weight: 700;">
+    Application Closing Date
+  </div>
+  <div style="font-size: 22px; font-weight: 800; color: #7c2d12; margin: 4px 0;">
+    {{ opportunity.application_closing_date|date:"l, d F Y" }}
+  </div>
+  <div style="font-size: 13px; color: #9a3412;">
+    Calculated Remaining Time: <strong>{{ remaining_time_text }}</strong> (until 23:59:59 IST)
+  </div>
+</div>
+
+{% if tracker_status %}
+<div class="info-card">
+  <strong>Your Current Tracker Status:</strong>
+  <span class="badge badge-blue" style="margin-left: 6px;">{{ tracker_status }}</span>
+  <p style="font-size: 13px; margin: 6px 0 0 0; color: #475569;">
+    {% if is_saved_only %}
+      You bookmarked this scheme on your ScholarSetu AI Saved Opportunities list. (Note: Saving an opportunity does not mean an application has been submitted.)
+    {% else %}
+      Track and complete your submission milestone before the official portal closes.
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+<table class="meta-table">
+  <tr>
+    <td class="meta-label">Benefit Details</td>
+    <td class="meta-value">
+      {% if opportunity.benefit_amount %}
+        &#8377; {{ opportunity.benefit_amount|floatformat:0 }} ({{ opportunity.get_benefit_frequency_display|default:opportunity.benefit_frequency }})
+      {% else %}
+        {{ opportunity.benefit_description|default:"Refer to official portal" }}
+      {% endif %}
+    </td>
+  </tr>
+  {% if opportunity.required_documents %}
+  <tr>
+    <td class="meta-label">Documents to Verify</td>
+    <td class="meta-value">{{ opportunity.required_documents|join:", " }}</td>
+  </tr>
+  {% endif %}
+  <tr>
+    <td class="meta-label">Official Portal Mode</td>
+    <td class="meta-value">{{ opportunity.get_application_method_display|default:opportunity.application_method }}</td>
+  </tr>
+</table>
+
+<div style="margin: 24px 0 16px 0;">
+  {% if opportunity.official_application_url %}
+  <a href="{{ opportunity.official_application_url }}" class="btn btn-accent" target="_blank">Direct Official Apply Portal &rarr;</a>
+  {% elif opportunity.official_information_url %}
+  <a href="{{ opportunity.official_information_url }}" class="btn btn-primary" target="_blank">Official Information Page &rarr;</a>
+  {% endif %}
+  <a href="{{ tracker_url|default:opportunity_url }}" class="btn btn-secondary" target="_blank">Open on ScholarSetu AI</a>
+</div>
+
+<p style="font-size: 12px; color: #64748b; line-height: 1.5;">
+  <em>Notice:</em> Government scholarship portals often experience server traffic surges in the final 24 hours. We recommend completing your application and document uploads well ahead of the deadline.
+</p>
+{% endblock %}

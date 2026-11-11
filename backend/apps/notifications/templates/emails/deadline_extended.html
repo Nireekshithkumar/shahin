@@ -1,0 +1,43 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-green">OFFICIAL DEADLINE EXTENDED</span>
+</div>
+
+<h1>Deadline Extended: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card-success">
+  <p style="margin: 0 0 10px 0; font-size: 14px; font-weight: 600; color: #166534;">
+    The official authority has formally extended the application closing date:
+  </p>
+  <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+    <tr>
+      <td style="color: #64748b; padding: 4px 0; width: 45%;">Previous Deadline:</td>
+      <td style="color: #b91c1c; text-decoration: line-through; font-weight: 600;">
+        {{ old_deadline|default:"Previous Date" }}
+      </td>
+    </tr>
+    <tr>
+      <td style="color: #166534; padding: 4px 0; font-weight: 700;">New Verified Deadline:</td>
+      <td style="color: #15803d; font-weight: 800; font-size: 16px;">
+        {{ new_deadline|default:opportunity.application_closing_date|date:"l, d F Y" }}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<p>
+  Your deadline reminder schedule on ScholarSetu AI has been automatically updated according to your configured preferences.
+</p>
+
+<div style="margin: 24px 0 16px 0;">
+  {% if opportunity.official_application_url %}
+  <a href="{{ opportunity.official_application_url }}" class="btn btn-primary" target="_blank">Proceed to Official Portal &rarr;</a>
+  {% endif %}
+  <a href="{{ opportunity_url }}" class="btn btn-secondary" target="_blank">View on ScholarSetu AI</a>
+</div>
+{% endblock %}

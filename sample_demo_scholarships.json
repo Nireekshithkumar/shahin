@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Prime Minister Post-Matric Scholarship for Higher Education 2026",
+    "provider": "Ministry of Social Justice and Empowerment",
+    "applicable_state": "All India",
+    "short_description": "Full financial support and maintenance stipend for undergraduate and postgraduate students from economically disadvantaged families.",
+    "detailed_description": "Provides complete tuition fee reimbursement plus a monthly maintenance allowance of ₹4,000 for students enrolled in UGC/AICTE accredited degree programs.",
+    "benefit_amount": 75000,
+    "benefit_description": "₹75,000 per year + tuition waiver",
+    "application_closing_date": "2026-12-15",
+    "official_application_url": "https://scholarships.gov.in",
+    "source_name": "National Scholarship Portal"
+  },
+  {
+    "title": "Karnataka State Vidya Samruddhi STEM Fellowship 2026",
+    "provider": "Department of Collegiate Education, Karnataka",
+    "applicable_state": "Karnataka",
+    "short_description": "State merit grant for women and rural students pursuing Engineering, Medical, and Pure Science degrees in Karnataka.",
+    "detailed_description": "Merit-cum-means fellowship designed to encourage STEM enrollments across recognized Karnataka state institutions.",
+    "benefit_amount": 50000,
+    "benefit_description": "₹50,000 one-time grant + laptop stipend",
+    "application_closing_date": "2026-11-30",
+    "official_application_url": "https://ssp.postmatric.karnataka.gov.in",
+    "source_name": "Karnataka SSP Portal"
+  }
+]

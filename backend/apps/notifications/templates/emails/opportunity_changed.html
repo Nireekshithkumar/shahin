@@ -1,0 +1,50 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-orange">CRITERIA / BENEFIT UPDATE</span>
+</div>
+
+<h1>Important Update: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card">
+  <strong>Summary of Official Changes Detected:</strong>
+  <p style="margin: 6px 0 0 0; font-size: 14px; color: #1e293b;">{{ change_summary }}</p>
+</div>
+
+<h2>Updated Opportunity Details</h2>
+<table class="meta-table">
+  <tr>
+    <td class="meta-label">Benefit Amount</td>
+    <td class="meta-value">
+      {% if opportunity.benefit_amount %}
+        &#8377; {{ opportunity.benefit_amount|floatformat:0 }} ({{ opportunity.get_benefit_frequency_display|default:opportunity.benefit_frequency }})
+      {% else %}
+        {{ opportunity.benefit_description|default:"As per official scheme guidelines" }}
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td class="meta-label">Current Deadline</td>
+    <td class="meta-value">
+      {{ opportunity.application_closing_date|date:"d M Y"|default:"Rolling / To be announced" }}
+    </td>
+  </tr>
+  {% if opportunity.required_documents %}
+  <tr>
+    <td class="meta-label">Required Documents</td>
+    <td class="meta-value">{{ opportunity.required_documents|join:", " }}</td>
+  </tr>
+  {% endif %}
+</table>
+
+<div style="margin: 24px 0 16px 0;">
+  <a href="{{ opportunity_url }}" class="btn btn-primary" target="_blank">Review Changes on ScholarSetu AI</a>
+  {% if opportunity.official_information_url %}
+  <a href="{{ opportunity.official_information_url }}" class="btn btn-secondary" target="_blank">Official Portal &rarr;</a>
+  {% endif %}
+</div>
+{% endblock %}

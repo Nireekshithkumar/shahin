@@ -1,0 +1,21 @@
+SCHOLARSETU AI - DEADLINE APPROACHING
+======================================
+
+Opportunity: {{ opportunity.title }}
+Provider: {{ opportunity.provider }}
+{% if days_remaining == 0 %}STATUS: DEADLINE TODAY{% endif %}
+
+
+APPLICATION CLOSING DATE: {{ opportunity.application_closing_date|date:"l, d F Y" }}
+REMAINING TIME: {{ remaining_time_text }} (until 23:59:59 IST)
+
+{% if tracker_status %}Your Tracker Status: {{ tracker_status }}{% endif %}
+
+{% if opportunity.official_application_url %}Direct Application URL: {{ opportunity.official_application_url }}{% endif %}
+ScholarSetu Opportunity Link: {{ opportunity_url }}
+Application Tracker: {{ tracker_url }}
+
+Please note: Government portals experience high load in final hours. Complete your submission early.
+
+Manage Preferences: {{ preferences_url }}
+Unsubscribe: {{ unsubscribe_url }}

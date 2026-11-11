@@ -1,0 +1,49 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-green">SCHOLARSHIP RENEWAL</span>
+</div>
+
+<h1>Renewal Reminder: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card-success">
+  <strong style="color: #166534; font-size: 14px;">Time to Submit Your Renewal Application:</strong>
+  <p style="margin: 6px 0 0 0; font-size: 13px; color: #14532d;">
+    Most continuing scholarship grants require submission of current semester/annual marksheets and bonafide student certificates to release continuing financial aid.
+  </p>
+</div>
+
+<table class="meta-table">
+  <tr>
+    <td class="meta-label">Continuing Benefit</td>
+    <td class="meta-value">
+      {% if opportunity.benefit_amount %}
+        &#8377; {{ opportunity.benefit_amount|floatformat:0 }} ({{ opportunity.get_benefit_frequency_display|default:opportunity.benefit_frequency }})
+      {% else %}
+        {{ opportunity.benefit_description|default:"Annual Continuing Disbursal" }}
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td class="meta-label">Renewal Requirements</td>
+    <td class="meta-value">Previous year marksheet, Bonafide certificate, current admission receipt</td>
+  </tr>
+  {% if opportunity.application_closing_date %}
+  <tr>
+    <td class="meta-label">Renewal Deadline</td>
+    <td class="meta-value"><strong>{{ opportunity.application_closing_date|date:"d M Y" }}</strong></td>
+  </tr>
+  {% endif %}
+</table>
+
+<div style="margin: 24px 0 16px 0;">
+  {% if opportunity.official_application_url %}
+  <a href="{{ opportunity.official_application_url }}" class="btn btn-primary" target="_blank">Access Official Renewal Portal &rarr;</a>
+  {% endif %}
+  <a href="{{ tracker_url|default:opportunity_url }}" class="btn btn-secondary" target="_blank">Manage on ScholarSetu AI</a>
+</div>
+{% endblock %}

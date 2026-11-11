@@ -1,0 +1,43 @@
+{% extends "emails/base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 12px;">
+  <span class="badge badge-blue">APPLICATION TRACKER MILESTONE</span>
+</div>
+
+<h1>Milestone Reminder: {{ opportunity.title }}</h1>
+<p style="font-size: 14px; color: #64748b; margin-top: -8px;">
+  Provider: <strong>{{ opportunity.provider }}</strong>
+</p>
+
+<div class="info-card">
+  <strong>Tracker Status:</strong> <span class="badge badge-blue">{{ tracker.get_status_display|default:tracker.status }}</span>
+  <p style="margin: 8px 0 0 0; font-size: 14px; color: #1e293b;">
+    {{ reminder_message|default:"You have pending tasks or documents to complete before submitting your application." }}
+  </p>
+</div>
+
+{% if tracker.documents_checklist %}
+<h2>Your Document Checklist Status</h2>
+<ul style="padding-left: 20px; font-size: 13px; color: #334155; line-height: 1.8;">
+  {% for doc in tracker.documents_checklist %}
+    <li>
+      <strong>{% if doc.name %}{{ doc.name }}{% else %}{{ doc.document_name }}{% endif %}</strong> &mdash; 
+      {% if doc.status == "READY" or doc.status == "VERIFIED" %}
+        <span style="color: #16a34a; font-weight: 600;">Ready &#10003;</span>
+      {% else %}
+        <span style="color: #ea580c; font-weight: 600;">Pending / In Progress</span>
+      {% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+
+<div style="margin: 24px 0 16px 0;">
+  <a href="{{ tracker_url }}" class="btn btn-primary" target="_blank">Open Application Tracker</a>
+  {% if opportunity.official_application_url %}
+  <a href="{{ opportunity.official_application_url }}" class="btn btn-secondary" target="_blank">Official Application Portal &rarr;</a>
+  {% endif %}
+</div>
+{% endblock %}

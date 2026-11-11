@@ -1,0 +1,26 @@
+SCHOLARSETU AI - NEW OPPORTUNITY ALERT
+========================================
+
+{{ opportunity.title }}
+Provider: {{ opportunity.provider }} ({{ opportunity.get_government_level_display|default:opportunity.government_level }})
+Category: {{ opportunity_category|default:"Scholarship" }}
+
+{% if match_explanation %}
+WHY THIS OPPORTUNITY MATCHES YOUR PROFILE:
+{{ match_explanation }}
+{% endif %}
+
+DETAILS:
+- Benefit: {% if opportunity.benefit_amount %}INR {{ opportunity.benefit_amount|floatformat:0 }} ({{ opportunity.get_benefit_frequency_display|default:opportunity.benefit_frequency }}){% else %}{{ opportunity.benefit_description|default:"As per official scheme norms" }}{% endif %}
+- Applicable State: {{ opportunity.applicable_state }}
+- Education Levels: {{ opportunity.education_levels|join:", " }}
+- Application Window: Opens: {{ opportunity.application_opening_date|date:"d M Y"|default:"Open" }} | Deadline: {{ opportunity.application_closing_date|date:"d M Y"|default:"Rolling" }}
+{% if opportunity.required_documents %}- Required Documents: {{ opportunity.required_documents|join:", " }}{% endif %}
+- Provenance: {{ opportunity.source_name }} (Verified: {{ last_verified_date|default:"Recently" }})
+
+LINKS:
+View on ScholarSetu AI: {{ opportunity_url }}
+{% if opportunity.official_application_url %}Official Application Portal: {{ opportunity.official_application_url }}{% endif %}
+
+Manage Notification Preferences: {{ preferences_url }}
+Unsubscribe: {{ unsubscribe_url }}
