@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, CheckCircle2, Save, AlertCircle } from 'lucide-react';
+import { User, CheckCircle2, Save, AlertCircle, Calendar } from 'lucide-react';
 import { profileService } from '../services/scholarsetuService';
 import { UserProfile } from '../types';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,27 @@ export const ProfilePage: React.FC = () => {
       setFormData(profile);
     }
   }, [profile]);
+
+  const handleDobChange = (dobStr: string) => {
+    let calculatedAge = formData.age;
+    if (dobStr) {
+      const birthDate = new Date(dobStr);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age >= 0 && age <= 120) {
+        calculatedAge = age;
+      }
+    }
+    setFormData((prev) => ({
+      ...prev,
+      date_of_birth: dobStr,
+      age: calculatedAge
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +114,7 @@ export const ProfilePage: React.FC = () => {
         {/* Personal Details */}
         <div className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-6">
           <h2 className="text-sm font-bold text-black mb-4 pb-2 border-b border-[#D2D2D4]">
-            1. Personal & Residency Information
+            1. Personal &amp; Residency Information
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
@@ -106,10 +127,32 @@ export const ProfilePage: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block font-semibold text-black mb-1">Age</label>
+              <label className="block font-semibold text-black mb-1">Gender</label>
+              <select
+                value={formData.gender || 'PREFER_NOT_TO_SAY'}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
+              >
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="TRANSGENDER">Transgender</option>
+                <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-semibold text-black mb-1">Date of Birth</label>
+              <input
+                type="date"
+                value={formData.date_of_birth || ''}
+                onChange={(e) => handleDobChange(e.target.value)}
+                className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-black mb-1">Age (Years)</label>
               <input
                 type="number"
-                value={formData.age || ''}
+                value={formData.age ?? ''}
                 onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) })}
                 className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
               />
@@ -136,20 +179,44 @@ export const ProfilePage: React.FC = () => {
                 className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
               />
             </div>
+            <div>
+              <label className="block font-semibold text-black mb-1">Occupation / Activity</label>
+              <select
+                value={formData.employment_status || 'Student'}
+                onChange={(e) => setFormData({ ...formData, employment_status: e.target.value })}
+                className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
+              >
+                <option value="Student">Student</option>
+                <option value="Farmer / Agriculture">Farmer / Agriculture</option>
+                <option value="Self Employed / Artisan">Self Employed / Artisan</option>
+                <option value="Salaried / Private">Salaried / Private</option>
+                <option value="Unemployed / Job Seeker">Unemployed / Job Seeker</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-semibold text-black mb-1">Parent's Primary Occupation</label>
+              <input
+                type="text"
+                value={formData.parent_occupation || ''}
+                onChange={(e) => setFormData({ ...formData, parent_occupation: e.target.value })}
+                placeholder="e.g. Farmer, Daily Wage, Teacher"
+                className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
+              />
+            </div>
           </div>
         </div>
 
         {/* Education Details */}
         <div className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-6">
           <h2 className="text-sm font-bold text-black mb-4 pb-2 border-b border-[#D2D2D4]">
-            2. Education & Academic Merit
+            2. Education &amp; Academic Merit
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="block font-semibold text-black mb-1">Current Education Level</label>
               <select
                 value={formData.current_education_level || 'UNDERGRADUATE'}
-                onChange={(e) => setFormData({ ...formData, current_education_level: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, current_education_level: e.target.value as any })}
                 className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
               >
                 <option value="CLASS_1_10">School (Class 1-10)</option>
@@ -161,7 +228,7 @@ export const ProfilePage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block font-semibold text-black mb-1">Course & Specialization</label>
+              <label className="block font-semibold text-black mb-1">Course &amp; Specialization</label>
               <input
                 type="text"
                 value={formData.course_name || ''}
@@ -195,9 +262,9 @@ export const ProfilePage: React.FC = () => {
         {/* Financial & Social Reservation */}
         <div className="bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] p-6">
           <h2 className="text-sm font-bold text-black mb-4 pb-2 border-b border-[#D2D2D4]">
-            3. Financial Limits & Reservation Category
+            3. Financial Limits &amp; Reservation Categories
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs mb-4">
             <div>
               <label className="block font-semibold text-black mb-1">Annual Family Income (₹)</label>
               <input
@@ -211,7 +278,7 @@ export const ProfilePage: React.FC = () => {
               <label className="block font-semibold text-black mb-1">Social Category</label>
               <select
                 value={formData.category || 'GENERAL'}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
                 className="w-full p-2.5 bg-[#F4F4F6] border border-[#D2D2D4] rounded-lg text-xs text-black focus:outline-none focus:border-[#FF634A]"
               >
                 <option value="GENERAL">General / Unreserved</option>
@@ -222,6 +289,73 @@ export const ProfilePage: React.FC = () => {
               </select>
             </div>
           </div>
+
+          {/* Additional Scheme-Specific Eligibility Flags */}
+          <div className="pt-3 border-t border-[#D2D2D4] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <label className="p-3 bg-[#F4F4F6] rounded-lg border border-[#D2D2D4] flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.bpl_card_holder || false}
+                onChange={(e) => setFormData({ ...formData, bpl_card_holder: e.target.checked })}
+                className="mt-0.5 accent-[#FF634A]"
+              />
+              <div>
+                <p className="font-bold text-black">BPL / Ration Card Holder</p>
+                <p className="text-[10px] text-black/60">Antodaya / BPL card issued</p>
+              </div>
+            </label>
+
+            <label className="p-3 bg-[#F4F4F6] rounded-lg border border-[#D2D2D4] flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_disabled || false}
+                onChange={(e) => setFormData({ ...formData, is_disabled: e.target.checked })}
+                className="mt-0.5 accent-[#FF634A]"
+              />
+              <div>
+                <p className="font-bold text-black">Person with Disability (PwD)</p>
+                <p className="text-[10px] text-black/60">Hold UDID / 40%+ disability certificate</p>
+              </div>
+            </label>
+
+            <label className="p-3 bg-[#F4F4F6] rounded-lg border border-[#D2D2D4] flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_minority || false}
+                onChange={(e) => setFormData({ ...formData, is_minority: e.target.checked })}
+                className="mt-0.5 accent-[#FF634A]"
+              />
+              <div>
+                <p className="font-bold text-black">Religious Minority</p>
+                <p className="text-[10px] text-black/60">Muslim, Christian, Sikh, Buddhist, Jain, Parsi</p>
+              </div>
+            </label>
+          </div>
+
+          {formData.is_disabled && (
+            <div className="mt-3 p-3 bg-[#F4F4F6] rounded-lg border border-[#D2D2D4] grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block font-semibold text-black mb-1">Disability Percentage (%)</label>
+                <input
+                  type="number"
+                  value={formData.disability_percentage || ''}
+                  onChange={(e) => setFormData({ ...formData, disability_percentage: Number(e.target.value) })}
+                  placeholder="e.g. 40"
+                  className="w-full p-2 bg-[#FFFFFF] border border-[#D2D2D4] rounded text-xs text-black focus:border-[#FF634A] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold text-black mb-1">Disability Nature / Type</label>
+                <input
+                  type="text"
+                  value={formData.disability_type || ''}
+                  onChange={(e) => setFormData({ ...formData, disability_type: e.target.value })}
+                  placeholder="e.g. Locomotor, Visual, Hearing"
+                  className="w-full p-2 bg-[#FFFFFF] border border-[#D2D2D4] rounded text-xs text-black focus:border-[#FF634A] focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {savedSuccess && (

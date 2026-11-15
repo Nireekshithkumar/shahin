@@ -121,3 +121,80 @@ class RecommendationEngine:
         # Sort strictly by composite score descending
         ranked_results.sort(key=lambda x: x['composite_score'], reverse=True)
         return ranked_results[:limit]
+
+    @classmethod
+    def get_categorized_recommendations(cls, profile: UserProfile, limit_per_category: int = 15) -> Dict[str, Any]:
+        """
+        Classifies all active opportunities into three categories:
+        A. Eligible Schemes
+        B. Potentially Eligible Schemes
+        C. Not Currently Eligible
+        Includes recommendation reasons and missing eligibility information.
+        """
+        opportunities = Opportunity.objects.exclude(
+            application_status__in=[ApplicationStatus.EXPIRED, ApplicationStatus.ARCHIVED, ApplicationStatus.CLOSED]
+        )
+
+        categories = {
+            'eligible': [],
+            'potentially_eligible': [],
+            'not_eligible': []
+        }
+
+        today = date.today()
+
+        for opp in opportunities:
+            eval_res = EligibilityEngine.evaluate(opp, profile=profile)
+            status = eval_res['status']
+
+            # Factors
+            conf_score = float(eval_res['confidence_score'])
+            badges = []
+
+            # Reason for recommendation
+            if status == EligibilityResultStatus.ELIGIBLE:
+                rec_reason = f"You satisfy all structured criteria for this {opp.applicable_state or 'Central'} program based on your verified education ({profile.current_education_level}) and income limit."
+                badges.append("Eligible Opportunity")
+            elif status == EligibilityResultStatus.POTENTIALLY_ELIGIBLE:
+                missing_str = ", ".join(eval_res.get('missing_profile_fields', [])) or "supporting document validation"
+                rec_reason = f"You potentially qualify for this program. Additional information required: {missing_str}."
+                badges.append("Potentially Eligible")
+            else:
+                failed_items = [f.get('condition_name', 'Criteria') for f in eval_res.get('failed_conditions', [])]
+                failed_str = ", ".join(failed_items) or "criteria limits"
+                rec_reason = f"You do not currently satisfy the specific condition: {failed_str}."
+                badges.append("Not Currently Eligible")
+
+            item_data = {
+                'opportunity': opp,
+                'composite_score': conf_score,
+                'status': status,
+                'recommendation_reason': rec_reason,
+                'missing_information': eval_res.get('missing_profile_fields', []) + [u.get('condition_name') for u in eval_res.get('unconfirmed_conditions', []) if u.get('condition_name')],
+                'eligibility': eval_res,
+                'badges': badges,
+            }
+
+            if status == EligibilityResultStatus.ELIGIBLE:
+                categories['eligible'].append(item_data)
+            elif status == EligibilityResultStatus.POTENTIALLY_ELIGIBLE:
+                categories['potentially_eligible'].append(item_data)
+            else:
+                categories['not_eligible'].append(item_data)
+
+        # Sort within each category by confidence score
+        for k in categories:
+            categories[k].sort(key=lambda x: x['composite_score'], reverse=True)
+            categories[k] = categories[k][:limit_per_category]
+
+        return {
+            'summary': {
+                'eligible_count': len(categories['eligible']),
+                'potentially_eligible_count': len(categories['potentially_eligible']),
+                'not_eligible_count': len(categories['not_eligible']),
+                'total_evaluated': len(opportunities)
+            },
+            'eligible': categories['eligible'],
+            'potentially_eligible': categories['potentially_eligible'],
+            'not_eligible': categories['not_eligible']
+        }

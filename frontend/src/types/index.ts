@@ -244,3 +244,91 @@ export interface WorkflowItem {
   created_at: string;
   updated_at: string;
 }
+
+export interface UserDocumentItem {
+  id: number;
+  document_type: string;
+  document_type_display: string;
+  document_file: string;
+  original_filename: string;
+  file_size_bytes: number;
+  mime_type: string;
+  holder_name: string;
+  certificate_number: string;
+  masked_certificate_number: string;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  date_of_birth?: string | null;
+  remaining_days?: number | null;
+  issuing_authority: string;
+  state: string;
+  district: string;
+  annual_income?: string | number | null;
+  validity_status: 'VALID' | 'EXPIRING_SOON' | 'EXPIRED' | 'VERIFICATION_REQUIRED' | 'NO_EXPIRY_APPLICABLE';
+  validity_status_display: string;
+  warning_period_days: number;
+  authenticity_status: 'AUTHENTICITY_NOT_VERIFIED' | 'VERIFIED_OFFICIAL' | 'REJECTED_INVALID';
+  authenticity_status_display: string;
+  authenticity_source?: string;
+  authenticity_verified_at?: string | null;
+  authenticity_result?: string;
+  readability_status: string;
+  readability_status_display: string;
+  detected_financial_year?: string;
+  is_expired: boolean;
+  masked_identifier?: string;
+  ocr_confidence: number;
+  analysis_notes?: string;
+  extracted_metadata?: Record<string, any>;
+  pending_proposals_count: number;
+  family_member?: number | null;
+  family_member_name?: string;
+  uploaded_at: string;
+  updated_at: string;
+}
+
+export interface ProfileUpdateProposalItem {
+  id: number;
+  document: number;
+  field_name: string;
+  field_label: string;
+  current_value: string;
+  extracted_value: string;
+  ocr_confidence: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  status_display: string;
+  is_sensitive: boolean;
+  holder_mismatch_warning: boolean;
+  created_at: string;
+  decided_at?: string | null;
+}
+
+export interface RenewalGuidanceItem {
+  document_id: number;
+  document_name: string;
+  document_type: string;
+  validity_status: string;
+  expiry_date: string;
+  portal_name: string;
+  portal_url: string;
+  authority: string;
+  validity_info: string;
+  procedure: string[];
+  required_documents: string[];
+  disclaimer: string;
+}
+
+export interface CertificateValidityRuleItem {
+  id: number;
+  certificate_type: string;
+  certificate_type_display: string;
+  state: string;
+  district?: string;
+  issuing_authority?: string;
+  validity_duration_months?: number | null;
+  has_no_general_expiry: boolean;
+  official_source_url?: string;
+  notes?: string;
+  is_active: boolean;
+}
+

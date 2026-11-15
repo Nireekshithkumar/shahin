@@ -10,10 +10,9 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#003366",
-  "background_color": "#f8fafc",
+  "theme_color": "#FF634A",
+  "background_color": "#F4F4F6",
   "description": "Discover genuine Indian scholarships and government schemes with AI verification, voice guidance, and offline access.",
   "orientation": "portrait-primary",
   "categories": ["education", "government", "productivity"]
 }
-

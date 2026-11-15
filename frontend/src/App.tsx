@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { AuthModal } from './components/layout/AuthModal';
+import { OfflineStatusBar } from './components/common/OfflineStatusBar';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 import { HomePage } from './pages/HomePage';
 import { ScholarshipsPage } from './pages/ScholarshipsPage';
@@ -87,8 +89,9 @@ export const AppContent: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <div className="flex flex-col min-h-screen bg-[#F4F4F6] text-[#000000] font-sans">
         <Navbar onOpenAuth={() => setAuthModalOpen(true)} />
+        <OfflineStatusBar />
 
         <main className="flex-1">
           <Routes>
@@ -138,11 +141,13 @@ export const AppContent: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

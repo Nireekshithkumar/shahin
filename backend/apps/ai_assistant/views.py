@@ -110,16 +110,22 @@ class RejectionAnalyzerView(views.APIView):
 
     def post(self, request):
         rejection_text = request.data.get('rejection_text', '').strip()
-        rejection_file = request.FILES.get('rejection_file') or request.FILES.get('file')
+        rejection_files = request.FILES.getlist('rejection_file') or request.FILES.getlist('file') or request.FILES.getlist('files')
+        if not rejection_files:
+            single = request.FILES.get('rejection_file') or request.FILES.get('file')
+            if single:
+                rejection_files = [single]
+
         opp_id = request.data.get('opportunity_id')
 
-        # If a file is uploaded, extract text with DocumentAnalysisService OCR
-        if rejection_file:
-            fname = rejection_file.name
-            mime = rejection_file.content_type
-            extracted = DocumentAnalysisService.extract_text_from_file(rejection_file, fname, mime)
-            if extracted:
-                rejection_text = f"{rejection_text} {extracted}".strip()
+        # If files are uploaded, extract text with DocumentAnalysisService OCR
+        if rejection_files:
+            for rf in rejection_files:
+                fname = rf.name
+                mime = rf.content_type
+                extracted = DocumentAnalysisService.extract_text_from_file(rf, fname, mime)
+                if extracted:
+                    rejection_text = f"{rejection_text} {extracted}".strip()
 
         if not rejection_text:
             return Response({

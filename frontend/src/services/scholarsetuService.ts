@@ -1,4 +1,5 @@
 import { apiClient } from './api';
+export { apiClient };
 import {
   User, UserProfile, Opportunity, EligibilityResult, RecommendationItem,
   ApplicationTrackerItem, SavedOpportunityItem, NotificationItem,
@@ -129,8 +130,8 @@ export const eligibilityService = {
 };
 
 export const recommendationService = {
-  async getRecommendations(): Promise<RecommendationItem[]> {
-    const res = await apiClient.get('/recommendations/');
+  async getRecommendations(params?: { categorized?: boolean }): Promise<any> {
+    const res = await apiClient.get('/recommendations/', { params });
     return res.data;
   },
 };
@@ -167,13 +168,24 @@ export const applicationService = {
 };
 
 export const documentService = {
-  async getDocuments(): Promise<any[]> {
-    const res = await apiClient.get('/profile/documents/');
+  async getDocuments(params: Record<string, any> = {}): Promise<{ summary?: any; results: any[] }> {
+    const res = await apiClient.get('/profile/documents/', { params });
+    if (Array.isArray(res.data)) {
+      return { results: res.data };
+    }
     return res.data;
   },
-  async uploadDocument(file: File, documentType?: string) {
+  async getDocument(id: number) {
+    const res = await apiClient.get(`/profile/documents/${id}/`);
+    return res.data;
+  },
+  async uploadDocument(file: File | File[], documentType?: string) {
     const formData = new FormData();
-    formData.append('document_file', file);
+    if (Array.isArray(file)) {
+      file.forEach((f) => formData.append('document_file', f));
+    } else {
+      formData.append('document_file', file);
+    }
     if (documentType) {
       formData.append('document_type', documentType);
     }
@@ -182,8 +194,44 @@ export const documentService = {
     });
     return res.data;
   },
+  async updateDocument(id: number, data: Record<string, any>) {
+    const res = await apiClient.patch(`/profile/documents/${id}/`, data);
+    return res.data;
+  },
+  async replaceDocument(id: number, file: File | File[]) {
+    const formData = new FormData();
+    if (Array.isArray(file)) {
+      file.forEach((f) => formData.append('document_file', f));
+    } else {
+      formData.append('document_file', file);
+    }
+    const res = await apiClient.post(`/profile/documents/${id}/replace/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data;
+  },
   async deleteDocument(id: number) {
     const res = await apiClient.delete(`/profile/documents/${id}/`);
+    return res.data;
+  },
+  async getDocumentProposals(id: number) {
+    const res = await apiClient.get(`/profile/documents/${id}/proposals/`);
+    return res.data;
+  },
+  async decideProposal(id: number, payload: { proposal_id?: number; decision?: string; action?: string; selected_ids?: number[] }) {
+    const res = await apiClient.post(`/profile/documents/${id}/proposals/decide/`, payload);
+    return res.data;
+  },
+  async getAllPendingProposals() {
+    const res = await apiClient.get('/profile/documents/proposals/pending/');
+    return res.data;
+  },
+  async getRenewalGuidance(id: number) {
+    const res = await apiClient.get(`/profile/documents/${id}/renewal-guidance/`);
+    return res.data;
+  },
+  async getValidityRules() {
+    const res = await apiClient.get('/profile/documents/rules/');
     return res.data;
   },
   async checkReadiness(opportunityId: number) {
@@ -238,11 +286,15 @@ export const aiAssistantService = {
     const res = await apiClient.post('/ai/form-assistant/', data);
     return res.data;
   },
-  async analyzeRejection(rejectionText: string, file?: File, opportunityId?: number) {
+  async analyzeRejection(rejectionText: string, file?: File | File[], opportunityId?: number) {
     const formData = new FormData();
     formData.append('rejection_text', rejectionText);
     if (file) {
-      formData.append('rejection_file', file);
+      if (Array.isArray(file)) {
+        file.forEach((f) => formData.append('rejection_file', f));
+      } else {
+        formData.append('rejection_file', file);
+      }
     }
     if (opportunityId) {
       formData.append('opportunity_id', String(opportunityId));

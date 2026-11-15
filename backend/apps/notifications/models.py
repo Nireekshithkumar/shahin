@@ -17,6 +17,8 @@ class NotificationType(models.TextChoices):
     SAVED_OPPORTUNITY_CLOSING = 'SAVED_OPPORTUNITY_CLOSING', 'Saved Opportunity Closing Soon'
     TRACKER_REMINDER = 'TRACKER_REMINDER', 'Application Tracker Reminder'
     RENEWAL_REMINDER = 'RENEWAL_REMINDER', 'Scholarship Renewal Reminder'
+    CERTIFICATE_EXPIRING = 'CERTIFICATE_EXPIRING', 'Certificate Expiring Soon'
+    CERTIFICATE_EXPIRED = 'CERTIFICATE_EXPIRED', 'Certificate Expired'
     WEEKLY_DIGEST = 'WEEKLY_DIGEST', 'Weekly Opportunity Digest'
     
     # Account security and system notifications
