@@ -323,3 +323,86 @@ class CertificateMonitoringSystemTests(TestCase):
         self.assertTrue(len(res_data['citations']) > 0)
         self.assertIn('https://dopt.gov.in', [c['source_url'] for c in res_data['citations']])
         self.assertTrue(len(res_data['retrieved_guidelines']) > 0)
+
+    def test_rag_classification_detects_document_types_semantically(self):
+        """Tests that RAG classification identifies document types based on semantic anchors without hardcoded keyword if/else."""
+        from apps.ai_assistant.document_intelligence import RAGDocumentIntelligenceEngine
+
+        # Income Certificate text
+        income_text = "Nadakacheri Atalji Janasnehi Kendra Tahasildar Gross Annual Family Income Certificate"
+        doc_type, conf, source = RAGDocumentIntelligenceEngine.classify_document_with_rag(income_text, "cert.pdf")
+        self.assertEqual(doc_type, DocumentTypeChoices.INCOME_CERTIFICATE)
+        self.assertGreaterEqual(conf, 0.70)
+
+        # Disability / UDID text
+        udid_text = "Department of Empowerment of Persons with Disabilities Unique Disability ID UDID Card RPwD Act"
+        doc_type, conf, source = RAGDocumentIntelligenceEngine.classify_document_with_rag(udid_text, "card.jpg")
+        self.assertEqual(doc_type, DocumentTypeChoices.DISABILITY_CERTIFICATE)
+        self.assertGreaterEqual(conf, 0.70)
+
+        # Marks card text
+        marks_text = "Central Board of Secondary Education Senior School Certificate Examination Grade Sheet Marks Statement"
+        doc_type, conf, source = RAGDocumentIntelligenceEngine.classify_document_with_rag(marks_text, "result.pdf")
+        self.assertEqual(doc_type, DocumentTypeChoices.MARKS_CARD)
+        self.assertGreaterEqual(conf, 0.70)
+
+    def test_scheme_specific_window_vs_general_validity(self):
+        """Test separating state-law general validity from scheme-specific issuance requirements (e.g. current FY)."""
+        from apps.opportunities.models import Opportunity
+        from apps.ai_assistant.document_intelligence import RAGDocumentIntelligenceEngine
+
+        # Create scheme requiring income certificate issued in current financial year
+        opp = Opportunity.objects.create(
+            title="Pre-Matric Minority Scholarship 2026-27",
+            provider="Ministry of Minority Affairs",
+            applicable_state="All India",
+            education_levels=["Secondary"],
+            max_annual_income=Decimal("200000.00"),
+            required_documents=["Income Certificate"],
+            official_application_url="https://scholarships.gov.in"
+        )
+
+        # Create income certificate issued 2 years ago (valid under state 3-year rule, but NOT current FY)
+        two_years_ago = date(date.today().year - 2, 5, 10)
+        test_file = SimpleUploadedFile("old_income.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.INCOME_CERTIFICATE,
+            document_file=test_file,
+            original_filename="old_income.pdf",
+            issue_date=two_years_ago,
+            expiry_date=two_years_ago + timedelta(days=365 * 3), # Valid for 3 years
+            validity_status=ValidityStatusChoices.VALID,
+            state="Maharashtra"
+        )
+
+        readiness = RAGDocumentIntelligenceEngine.evaluate_opportunity_readiness(self.user, opp)
+        self.assertEqual(readiness['opportunity_id'], opp.id)
+        
+        # Check that the requirement flags reissue needed due to scheme policy
+        self.assertEqual(len(readiness['scheme_renewal_required']), 1)
+        reissue_item = readiness['scheme_renewal_required'][0]
+        self.assertEqual(reissue_item['status'], 'SCHEME_REISSUE_REQUIRED')
+        self.assertIn('financial year', reissue_item['guidance'].lower())
+        self.assertTrue(len(readiness['citations']) > 0)
+
+    def test_rag_renewal_service_retrieval(self):
+        """Tests that CertificateRenewalService dynamically retrieves guidance from RAG."""
+        test_file = SimpleUploadedFile("nadakacheri.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.INCOME_CERTIFICATE,
+            document_file=test_file,
+            original_filename="nadakacheri.pdf",
+            state="Karnataka",
+            validity_status=ValidityStatusChoices.EXPIRED,
+            expiry_date=date.today() - timedelta(days=5)
+        )
+
+        guidance = CertificateRenewalService.get_guidance_for_document(doc)
+        self.assertIsNotNone(guidance)
+        self.assertIn("Nadakacheri", guidance['portal_name'])
+        self.assertIn("nadakacheri.karnataka.gov.in", guidance['portal_url'])
+        self.assertTrue(len(guidance['required_documents']) > 0)
+        self.assertTrue(len(guidance['procedure_steps']) > 0)
+
