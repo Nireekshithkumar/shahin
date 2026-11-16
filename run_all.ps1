@@ -1,4 +1,4 @@
-﻿Write-Host "========================================================" -ForegroundColor Cyan
+Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "Starting ScholarSetu AI / Government Scheme Assist AI" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 
