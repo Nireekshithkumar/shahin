@@ -230,6 +230,10 @@ export const documentService = {
     const res = await apiClient.get(`/profile/documents/${id}/renewal-guidance/`);
     return res.data;
   },
+  async getDocumentRAGAnalysis(id: number) {
+    const res = await apiClient.get(`/profile/documents/${id}/rag-analysis/`);
+    return res.data;
+  },
   async getValidityRules() {
     const res = await apiClient.get('/profile/documents/rules/');
     return res.data;

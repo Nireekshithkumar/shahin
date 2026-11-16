@@ -235,6 +235,13 @@ class UserDocument(models.Model):
     ocr_confidence = models.FloatField(default=1.0)
     analysis_notes = models.TextField(blank=True)
 
+    # RAG Document Intelligence
+    rag_explanation = models.TextField(blank=True, help_text="RAG-grounded AI explanation citing official guidelines and circulars")
+    rag_citations = models.JSONField(default=list, blank=True, help_text="List of official citations: title, authority, state, url, circular_ref")
+    rag_validity_period = models.CharField(max_length=150, blank=True, help_text="e.g. 1 Year from Issue Date or Permanent / Lifetime")
+    rag_renewal_guidance = models.TextField(blank=True, help_text="Specific renewal instructions grounded in official guidelines")
+    retrieval_confidence = models.FloatField(default=0.0, help_text="RAG retrieval and grounded analysis confidence score (0.0 to 1.0)")
+
     # Family Association
     family_member = models.ForeignKey(
         'FamilyMemberProfile',

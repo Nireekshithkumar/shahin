@@ -279,12 +279,60 @@ export interface UserDocumentItem {
   masked_identifier?: string;
   ocr_confidence: number;
   analysis_notes?: string;
+  rag_explanation?: string;
+  rag_citations?: Array<{
+    title: string;
+    source_url: string;
+    source_name: string;
+    state?: string;
+    circular_ref?: string;
+    issuing_authority?: string;
+  }>;
+  rag_validity_period?: string;
+  rag_renewal_guidance?: string;
+  retrieval_confidence?: number;
   extracted_metadata?: Record<string, any>;
   pending_proposals_count: number;
   family_member?: number | null;
   family_member_name?: string;
   uploaded_at: string;
   updated_at: string;
+}
+
+export interface RAGDocumentAnalysisItem {
+  document_id: number;
+  original_filename: string;
+  document_type: string;
+  document_type_display: string;
+  holder_name: string;
+  masked_certificate_number: string;
+  validity_status: string;
+  validity_status_display: string;
+  issue_date?: string | null;
+  expiry_date?: string | null;
+  remaining_days?: number | null;
+  validity_period?: string;
+  explanation?: string;
+  citations: Array<{
+    title: string;
+    source_url: string;
+    source_name: string;
+    state?: string;
+    circular_ref?: string;
+    issuing_authority?: string;
+  }>;
+  renewal_guidance?: string;
+  confidence: number;
+  retrieved_guidelines: Array<{
+    score: number;
+    chunk_text: string;
+    document_title: string;
+    source_url: string;
+    source_name: string;
+    metadata: Record<string, any>;
+  }>;
+  ocr_confidence: number;
+  readability_status: string;
 }
 
 export interface ProfileUpdateProposalItem {

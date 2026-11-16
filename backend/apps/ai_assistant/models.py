@@ -9,6 +9,8 @@ class RAGDocumentType(models.TextChoices):
     ELIGIBILITY_RULES = 'ELIGIBILITY_RULES', 'Eligibility Rules Document'
     GOVERNMENT_CIRCULAR = 'GOVERNMENT_CIRCULAR', 'Government Circular / Gazette'
     PORTAL_GUIDE = 'PORTAL_GUIDE', 'Application Portal Guide'
+    CERTIFICATE_VALIDITY_GUIDELINE = 'CERTIFICATE_VALIDITY_GUIDELINE', 'Official Certificate Validity Guideline'
+    DOCUMENT_REQUIREMENTS = 'DOCUMENT_REQUIREMENTS', 'Official Scheme Document Requirements'
 
 class RAGDocument(models.Model):
     title = models.CharField(max_length=500)

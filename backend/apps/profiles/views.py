@@ -331,6 +331,62 @@ class DocumentAuditLogsView(views.APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class UserDocumentRAGAnalysisView(views.APIView):
+    """
+    Returns RAG-grounded AI document intelligence analysis for a specific certificate,
+    including retrieved official circular chunks, citations with source URLs, and grounded explanation.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        try:
+            doc = UserDocument.objects.get(id=pk, user=request.user)
+        except UserDocument.DoesNotExist:
+            return Response({'error': 'Document not found or access unauthorized.'}, status=status.HTTP_404_NOT_FOUND)
+
+        from apps.ai_assistant.document_intelligence import RAGDocumentIntelligenceEngine
+
+        # Get detailed retrieved chunks and analysis
+        retrieved = RAGDocumentIntelligenceEngine.retrieve_guidelines(
+            doc_type=doc.document_type,
+            state=doc.state,
+            issuing_authority=doc.issuing_authority,
+            extracted_text=doc.extracted_text or ""
+        )
+
+        analysis = RAGDocumentIntelligenceEngine.analyze_certificate_with_rag(
+            doc_type=doc.document_type,
+            issue_date=doc.issue_date,
+            explicit_expiry=doc.expiry_date or doc.detected_expiry_date,
+            state=doc.state,
+            issuing_authority=doc.issuing_authority,
+            extracted_text=doc.extracted_text or "",
+            warning_days=doc.warning_period_days or 30
+        )
+
+        return Response({
+            'document_id': doc.id,
+            'original_filename': doc.original_filename,
+            'document_type': doc.document_type,
+            'document_type_display': doc.get_document_type_display(),
+            'holder_name': doc.holder_name,
+            'masked_certificate_number': doc.get_masked_certificate_number(),
+            'validity_status': doc.validity_status,
+            'validity_status_display': doc.get_validity_status_display(),
+            'issue_date': doc.issue_date,
+            'expiry_date': doc.expiry_date or doc.detected_expiry_date,
+            'remaining_days': doc.get_remaining_days(),
+            'validity_period': doc.rag_validity_period or analysis.get('validity_period'),
+            'explanation': doc.rag_explanation or analysis.get('explanation'),
+            'citations': doc.rag_citations or analysis.get('citations', []),
+            'renewal_guidance': doc.rag_renewal_guidance or analysis.get('renewal_guidance'),
+            'confidence': doc.retrieval_confidence or analysis.get('confidence', 0.90),
+            'retrieved_guidelines': retrieved,
+            'ocr_confidence': doc.ocr_confidence,
+            'readability_status': doc.readability_status
+        }, status=status.HTTP_200_OK)
+
+
 class DocumentReadinessCheckView(views.APIView):
     permission_classes = [permissions.IsAuthenticated]
 

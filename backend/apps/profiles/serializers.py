@@ -92,6 +92,8 @@ class UserDocumentSerializer(serializers.ModelSerializer):
             'readability_status', 'readability_status_display',
             'detected_financial_year', 'detected_expiry_date', 'is_expired',
             'masked_identifier', 'ocr_confidence', 'analysis_notes',
+            'rag_explanation', 'rag_citations', 'rag_validity_period',
+            'rag_renewal_guidance', 'retrieval_confidence',
             'extracted_metadata', 'pending_proposals_count',
             'family_member', 'family_member_name',
             'uploaded_at', 'updated_at'
@@ -100,6 +102,8 @@ class UserDocumentSerializer(serializers.ModelSerializer):
             'id', 'original_filename', 'file_size_bytes', 'mime_type',
             'readability_status', 'detected_financial_year', 'detected_expiry_date',
             'is_expired', 'masked_identifier', 'ocr_confidence', 'analysis_notes',
+            'rag_explanation', 'rag_citations', 'rag_validity_period',
+            'rag_renewal_guidance', 'retrieval_confidence',
             'uploaded_at', 'updated_at'
         ]
 

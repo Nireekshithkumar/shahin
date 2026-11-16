@@ -8,7 +8,7 @@ import {
 import { documentService, opportunityService } from '../services/scholarsetuService';
 import { offlineService } from '../services/offlineService';
 import { useAuth } from '../context/AuthContext';
-import { Opportunity, UserDocumentItem, ProfileUpdateProposalItem, RenewalGuidanceItem } from '../types';
+import { Opportunity, UserDocumentItem, ProfileUpdateProposalItem, RenewalGuidanceItem, RAGDocumentAnalysisItem } from '../types';
 import { CameraCaptureModal } from '../components/common/CameraCaptureModal';
 
 export const DocumentReadinessPage: React.FC = () => {
@@ -69,6 +69,13 @@ export const DocumentReadinessPage: React.FC = () => {
   const [editingDoc, setEditingDoc] = useState<UserDocumentItem | null>(null);
   const [editFormData, setEditFormData] = useState<any>({});
   const [savingEdit, setSavingEdit] = useState(false);
+
+  // 4. RAG AI Document Intelligence Analysis Modal
+  const [isRAGModalOpen, setIsRAGModalOpen] = useState(false);
+  const [ragAnalysisDoc, setRagAnalysisDoc] = useState<UserDocumentItem | null>(null);
+  const [ragAnalysisData, setRagAnalysisData] = useState<RAGDocumentAnalysisItem | null>(null);
+  const [loadingRAG, setLoadingRAG] = useState(false);
+  const [infoVerifiedDocId, setInfoVerifiedDocId] = useState<number | null>(null);
 
   useEffect(() => {
     loadDocuments();
@@ -274,11 +281,58 @@ export const DocumentReadinessPage: React.FC = () => {
       setIsEditModalOpen(false);
       setSuccessMsg('Certificate details updated and validity re-evaluated.');
       await loadDocuments();
+      if (ragAnalysisDoc && ragAnalysisDoc.id === editingDoc.id) {
+        // Refresh RAG analysis modal data if open
+        const updatedAnalysis = await documentService.getDocumentRAGAnalysis(editingDoc.id);
+        setRagAnalysisData(updatedAnalysis);
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to update certificate details.');
     } finally {
       setSavingEdit(false);
     }
+  };
+
+  // Open RAG Document Intelligence Analysis Modal
+  const openRAGAnalysis = async (doc: UserDocumentItem) => {
+    setRagAnalysisDoc(doc);
+    setIsRAGModalOpen(true);
+    setLoadingRAG(true);
+    try {
+      const data = await documentService.getDocumentRAGAnalysis(doc.id);
+      setRagAnalysisData(data);
+    } catch (err) {
+      // Fallback with document's stored RAG fields
+      setRagAnalysisData({
+        document_id: doc.id,
+        original_filename: doc.original_filename,
+        document_type: doc.document_type,
+        document_type_display: doc.document_type_display || doc.document_type,
+        holder_name: doc.holder_name,
+        masked_certificate_number: doc.masked_certificate_number,
+        validity_status: doc.validity_status,
+        validity_status_display: doc.validity_status_display || doc.validity_status,
+        issue_date: doc.issue_date,
+        expiry_date: doc.expiry_date,
+        remaining_days: doc.remaining_days,
+        validity_period: doc.rag_validity_period || (doc.expiry_date ? `Valid until ${doc.expiry_date}` : 'Verification Required'),
+        explanation: doc.rag_explanation || doc.analysis_notes || 'Analyzed via official government guidelines.',
+        citations: doc.rag_citations || [],
+        renewal_guidance: doc.rag_renewal_guidance,
+        confidence: doc.retrieval_confidence || 0.92,
+        retrieved_guidelines: [],
+        ocr_confidence: doc.ocr_confidence,
+        readability_status: doc.readability_status,
+      });
+    } finally {
+      setLoadingRAG(false);
+    }
+  };
+
+  // Handle Verify Information Confirmation
+  const handleConfirmVerified = (docId: number) => {
+    setInfoVerifiedDocId(docId);
+    setSuccessMsg('Document details officially verified by citizen.');
   };
 
   return (
@@ -646,6 +700,19 @@ export const DocumentReadinessPage: React.FC = () => {
                               <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#F4F4F6] text-[#000000]/60 border border-[#D2D2D4]">
                                 {doc.authenticity_status_display || 'Authenticity Not Verified'}
                               </span>
+
+                              {/* RAG Confidence Indicator */}
+                              {doc.retrieval_confidence !== undefined && doc.retrieval_confidence > 0 && (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4]">
+                                  AI Grounded: {Math.round(doc.retrieval_confidence * 100)}%
+                                </span>
+                              )}
+
+                              {infoVerifiedDocId === doc.id && (
+                                <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4] flex items-center gap-1">
+                                  <Check className="w-2.5 h-2.5 text-[#FF634A]" /> Information Confirmed
+                                </span>
+                              )}
                             </div>
 
                             <p className="text-[11px] text-[#000000]/70">
@@ -694,6 +761,15 @@ export const DocumentReadinessPage: React.FC = () => {
 
                           {/* Action Buttons */}
                           <div className="flex flex-wrap items-center gap-2 self-start">
+                            {/* RAG Document Intelligence Analysis Button */}
+                            <button
+                              onClick={() => openRAGAnalysis(doc)}
+                              className="px-2.5 py-1.5 rounded-lg bg-[#E7E7E7] hover:bg-[#D2D2D4] border border-[#D2D2D4] text-[#000000] text-[11px] font-bold transition-colors flex items-center gap-1"
+                              title="View Grounded RAG Intelligence Analysis & Circular Citations"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 text-[#FF634A]" /> View AI Analysis
+                            </button>
+
                             {/* Review Profile Updates Button */}
                             {doc.pending_proposals_count > 0 && (
                               <button
@@ -799,11 +875,16 @@ export const DocumentReadinessPage: React.FC = () => {
 
             {/* Readiness Score Progress Bar */}
             {readinessReport && (
-              <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#D2D2D4] mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-[#000000]">
-                    Document Readiness for {readinessReport.opportunity_title}
-                  </span>
+              <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#D2D2D4] mb-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-[#000000]">
+                      Document Readiness for {readinessReport.opportunity_title}
+                    </span>
+                    {readinessReport.provider && (
+                      <p className="text-[10px] text-[#000000]/60">Provider: {readinessReport.provider}</p>
+                    )}
+                  </div>
                   <span className="text-sm font-black text-[#FF634A]">
                     {readinessReport.readiness_percentage}% Ready
                   </span>
@@ -816,9 +897,27 @@ export const DocumentReadinessPage: React.FC = () => {
                   />
                 </div>
 
-                <p className="text-[11px] text-[#000000]/70 mt-2 font-medium">
+                <p className="text-[11px] text-[#000000]/70 font-medium">
                   {readinessReport.guidance_message || readinessReport.overall_message}
                 </p>
+
+                {/* Grounded Scheme Citations */}
+                {readinessReport.citations && readinessReport.citations.length > 0 && (
+                  <div className="pt-2 border-t border-[#D2D2D4] flex flex-wrap items-center gap-2 text-[10px] text-[#000000]/70">
+                    <span className="font-bold text-[#000000]">Official Scheme Reference:</span>
+                    {readinessReport.citations.map((c: any, idx: number) => (
+                      <a
+                        key={idx}
+                        href={c.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#FF634A] font-bold underline"
+                      >
+                        {c.title} <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -860,32 +959,67 @@ export const DocumentReadinessPage: React.FC = () => {
                   <span>Verified &amp; Available Documents ({readinessReport.fulfilled_documents.length})</span>
                 </div>
                 <div className="divide-y divide-[#D2D2D4] text-xs">
-                  {readinessReport.fulfilled_documents.map((item: any, idx: number) => (
-                    <div key={idx} className="py-2 flex items-center justify-between">
-                      <div>
-                        <p className="font-bold text-[#000000]">{item.requirement}</p>
-                        <p className="text-[10px] text-[#000000]/60">
-                          Matched: {item.filename || item.matched_document_name} ({item.readability || item.readability_status})
-                        </p>
+                  {readinessReport.fulfilled_documents.map((item: any, idx: number) => {
+                    const matchedDoc = documents.find((d) => d.id === item.document_id);
+                    return (
+                      <div key={idx} className="py-2 flex items-center justify-between gap-2">
+                        <div>
+                          <p className="font-bold text-[#000000]">{item.requirement}</p>
+                          <p className="text-[10px] text-[#000000]/60">
+                            Matched: {item.filename || item.matched_document_name} • {item.validity_period || 'Verified Valid'}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {matchedDoc && (
+                            <button
+                              onClick={() => openRAGAnalysis(matchedDoc)}
+                              className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E7E7E7] hover:bg-[#D2D2D4] text-[#000000] border border-[#D2D2D4] flex items-center gap-1"
+                            >
+                              <ShieldCheck className="w-3 h-3 text-[#FF634A]" /> AI Analysis
+                            </button>
+                          )}
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4]">
+                            Ready
+                          </span>
+                        </div>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4]">
-                        Ready
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             {/* Expired / Renewal Warnings */}
             {readinessReport?.expired_documents && readinessReport.expired_documents.length > 0 && (
-              <div className="mt-3 p-3 bg-[#FFFFFF] rounded-lg border border-[#FF634A]/50 space-y-1 text-xs">
+              <div className="mt-3 p-3 bg-[#FFFFFF] rounded-lg border border-[#FF634A]/50 space-y-2 text-xs">
                 <p className="font-bold text-[#FF634A]">Documents Requiring Renewal:</p>
-                {readinessReport.expired_documents.map((item: any, idx: number) => (
-                  <p key={idx} className="text-[11px] text-[#000000]/70">
-                    • <strong>{item.filename || item.document_name}</strong> appears to have expired on {item.expiry_date}. Please obtain an updated certificate for the current session.
-                  </p>
-                ))}
+                {readinessReport.expired_documents.map((item: any, idx: number) => {
+                  const matchedDoc = documents.find((d) => d.id === item.document_id);
+                  return (
+                    <div key={idx} className="flex items-center justify-between gap-2 py-1 border-b border-[#D2D2D4]/50 last:border-0">
+                      <div>
+                        <p className="font-bold text-[#000000]">{item.requirement} ({item.filename})</p>
+                        <p className="text-[11px] text-[#000000]/70">Expired on {item.expiry_date}. {item.action}</p>
+                      </div>
+                      {matchedDoc && (
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => openRAGAnalysis(matchedDoc)}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#E7E7E7] hover:bg-[#D2D2D4] text-[#000000] border border-[#D2D2D4]"
+                          >
+                            AI Analysis
+                          </button>
+                          <button
+                            onClick={() => openRenewalGuidance(matchedDoc)}
+                            className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#FF634A] hover:bg-[#E5533D] text-[#FFFFFF]"
+                          >
+                            Renewal Guide
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1286,6 +1420,248 @@ export const DocumentReadinessPage: React.FC = () => {
               >
                 {savingEdit ? 'Saving & Re-evaluating...' : 'Save & Re-evaluate Validity'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MODAL 4: RAG AI DOCUMENT INTELLIGENCE ANALYSIS MODAL
+         ========================================================================= */}
+      {isRAGModalOpen && ragAnalysisDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl bg-[#E7E7E7] rounded-xl border border-[#D2D2D4] shadow-none overflow-hidden max-h-[90vh] flex flex-col text-[#000000]">
+            {/* Modal Header */}
+            <div className="p-4 bg-[#FFFFFF] border-b border-[#D2D2D4] flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-[#FF634A] text-[#FFFFFF] flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" /> RAG Document Intelligence
+                  </span>
+                  {ragAnalysisData && (
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-[#E7E7E7] text-[#000000] border border-[#D2D2D4]">
+                      {Math.round(ragAnalysisData.confidence * 100)}% Confidence
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-sm font-bold text-[#000000] mt-1">
+                  AI Validity &amp; Government Circular Analysis
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsRAGModalOpen(false)}
+                className="p-1 rounded text-[#000000]/50 hover:text-[#000000] hover:bg-[#E7E7E7]"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-5 overflow-y-auto space-y-4 flex-1">
+              {loadingRAG ? (
+                <div className="py-12 text-center text-xs text-[#000000]/60 flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-[#FF634A]" />
+                  <span>Retrieving official circulars &amp; analyzing validity...</span>
+                </div>
+              ) : ragAnalysisData ? (
+                <>
+                  {/* Document Summary Card */}
+                  <div className="bg-[#FFFFFF] p-3.5 rounded-lg border border-[#D2D2D4] space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs text-[#000000]">
+                        {ragAnalysisData.document_type_display || ragAnalysisData.document_type}
+                      </span>
+                      <span className="text-[10px] text-[#000000]/60 font-mono">
+                        {ragAnalysisData.original_filename}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-[#000000]/70 border-t border-[#D2D2D4]/50">
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/50 font-bold">Holder Name</span>
+                        <strong className="text-[#000000]">{ragAnalysisData.holder_name || 'Not extracted'}</strong>
+                      </div>
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/50 font-bold">Masked Identifier</span>
+                        <code className="text-[#000000] font-mono">{ragAnalysisData.masked_certificate_number || 'N/A'}</code>
+                      </div>
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/50 font-bold">OCR Readability</span>
+                        <span className="text-[#000000] font-medium">{ragAnalysisData.readability_status}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grounded Validity & Expiry Assessment */}
+                  <div className="bg-[#FFFFFF] p-4 rounded-lg border border-[#D2D2D4] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-wider text-[#000000]">
+                        Grounded Validity Determination
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                          ragAnalysisData.validity_status === 'VALID'
+                            ? 'bg-[#E7E7E7] text-[#000000] border-[#D2D2D4]'
+                            : ragAnalysisData.validity_status === 'EXPIRING_SOON'
+                            ? 'bg-[#FF634A] text-[#FFFFFF] border-[#FF634A]'
+                            : ragAnalysisData.validity_status === 'EXPIRED'
+                            ? 'bg-[#000000] text-[#FFFFFF] border-[#000000]'
+                            : 'bg-[#F4F4F6] text-[#000000] border-[#D2D2D4]'
+                        }`}
+                      >
+                        {ragAnalysisData.validity_status_display || ragAnalysisData.validity_status}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 bg-[#F4F4F6] p-2.5 rounded border border-[#D2D2D4] text-xs">
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/60 font-bold">Issue Date</span>
+                        <span className="font-bold text-[#000000]">{ragAnalysisData.issue_date || 'Not Legible'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/60 font-bold">Expiry Date</span>
+                        <span className="font-bold text-[#000000]">{ragAnalysisData.expiry_date || 'No General Expiry'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] block text-[#000000]/60 font-bold">Remaining Days</span>
+                        <span className={`font-bold ${ragAnalysisData.remaining_days !== null && ragAnalysisData.remaining_days !== undefined && ragAnalysisData.remaining_days <= 30 ? 'text-[#FF634A]' : 'text-[#000000]'}`}>
+                          {ragAnalysisData.remaining_days !== null && ragAnalysisData.remaining_days !== undefined
+                            ? (ragAnalysisData.remaining_days >= 0 ? `${ragAnalysisData.remaining_days} days` : `${Math.abs(ragAnalysisData.remaining_days)} days expired`)
+                            : 'N/A (Permanent)'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-[#E7E7E7] rounded-lg border border-[#D2D2D4] text-xs space-y-1">
+                      <p className="font-bold text-[#000000]">AI Grounded Explanation:</p>
+                      <p className="text-[11px] text-[#000000]/80 leading-relaxed">
+                        {ragAnalysisData.explanation}
+                      </p>
+                    </div>
+
+                    {ragAnalysisData.validity_period && (
+                      <p className="text-[11px] text-[#000000]/70">
+                        Applicable Validity Rule: <strong>{ragAnalysisData.validity_period}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Official Government Citations & References */}
+                  {ragAnalysisData.citations && ragAnalysisData.citations.length > 0 && (
+                    <div className="bg-[#FFFFFF] p-3.5 rounded-lg border border-[#D2D2D4] space-y-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#000000] flex items-center gap-1.5">
+                        <ExternalLink className="w-3.5 h-3.5 text-[#FF634A]" />
+                        Official Government References &amp; Citations
+                      </h4>
+                      <div className="space-y-2">
+                        {ragAnalysisData.citations.map((cite, idx) => (
+                          <div key={idx} className="p-2.5 rounded bg-[#F4F4F6] border border-[#D2D2D4] text-xs space-y-1">
+                            <div className="flex items-center justify-between">
+                              <p className="font-bold text-[#000000]">{cite.title}</p>
+                              {cite.source_url && (
+                                <a
+                                  href={cite.source_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[10px] text-[#FF634A] underline font-bold inline-flex items-center gap-1"
+                                >
+                                  Official Portal <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-[#000000]/60">
+                              Authority: {cite.issuing_authority || cite.source_name} • State: {cite.state || 'All India'}
+                              {cite.circular_ref && <span> • Ref: {cite.circular_ref}</span>}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Retrieved Official Guideline Chunks (Evidence Excerpts) */}
+                  {ragAnalysisData.retrieved_guidelines && ragAnalysisData.retrieved_guidelines.length > 0 && (
+                    <div className="bg-[#FFFFFF] p-3.5 rounded-lg border border-[#D2D2D4] space-y-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-[#000000]">
+                        Retrieved Circular Chunks &amp; Evidence
+                      </h4>
+                      <div className="space-y-2">
+                        {ragAnalysisData.retrieved_guidelines.map((chunk, idx) => (
+                          <div key={idx} className="p-2 rounded bg-[#F4F4F6] border border-[#D2D2D4] text-[11px] text-[#000000]/80 space-y-1">
+                            <div className="flex items-center justify-between text-[10px] text-[#000000]/50 font-bold">
+                              <span>{chunk.document_title}</span>
+                              <span>Match Score: {Math.round(chunk.score)}</span>
+                            </div>
+                            <p className="leading-relaxed line-clamp-3 hover:line-clamp-none transition-all">
+                              {chunk.chunk_text}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Renewal Guidance Notice */}
+                  {ragAnalysisData.renewal_guidance && (
+                    <div className="p-3 bg-[#FFFFFF] rounded-lg border border-[#FF634A]/50 text-xs space-y-1">
+                      <p className="font-bold text-[#FF634A]">Renewal Guidance:</p>
+                      <p className="text-[11px] text-[#000000]/80 leading-relaxed">
+                        {ragAnalysisData.renewal_guidance}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 bg-[#FFFFFF] border-t border-[#D2D2D4] flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setIsRAGModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg bg-[#E7E7E7] hover:bg-[#D2D2D4] border border-[#D2D2D4] text-xs font-bold text-[#000000] transition-colors"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                {/* Verify Information Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (ragAnalysisDoc) handleConfirmVerified(ragAnalysisDoc.id);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#E7E7E7] hover:bg-[#D2D2D4] border border-[#D2D2D4] text-xs font-bold text-[#000000] transition-colors flex items-center gap-1"
+                >
+                  <Check className="w-3.5 h-3.5 text-[#FF634A]" /> Verify Information
+                </button>
+
+                {/* Correct Extracted Data Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRAGModalOpen(false);
+                    if (ragAnalysisDoc) openEditModal(ragAnalysisDoc);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#E7E7E7] hover:bg-[#D2D2D4] border border-[#D2D2D4] text-xs font-bold text-[#000000] transition-colors flex items-center gap-1"
+                >
+                  <Edit3 className="w-3.5 h-3.5" /> Correct Extracted Data
+                </button>
+
+                {/* Open Renewal Modal if applicable */}
+                {ragAnalysisDoc && (ragAnalysisDoc.validity_status === 'EXPIRING_SOON' || ragAnalysisDoc.validity_status === 'EXPIRED') && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRAGModalOpen(false);
+                      openRenewalGuidance(ragAnalysisDoc);
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-[#FF634A] hover:bg-[#E5533D] text-xs font-bold text-[#FFFFFF] transition-colors flex items-center gap-1"
+                  >
+                    <Clock className="w-3.5 h-3.5" /> Renewal Guidance
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

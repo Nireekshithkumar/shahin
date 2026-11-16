@@ -204,3 +204,122 @@ class CertificateMonitoringSystemTests(TestCase):
         self.assertIn('https://nadakacheri.karnataka.gov.in', guidance['portal_url'])
         self.assertTrue(len(guidance['procedure']) > 0)
         self.assertTrue(len(guidance['required_documents']) > 0)
+
+    def test_rag_powered_validity_analysis_and_citations(self):
+        """Verifies RAG retrieves official Karnataka Nadakacheri guidelines and calculates 12-month validity."""
+        test_file = SimpleUploadedFile("karnataka_income.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.INCOME_CERTIFICATE,
+            document_file=test_file,
+            original_filename="karnataka_income.pdf",
+            state='Karnataka',
+            issuing_authority='Tahasildar Nadakacheri',
+            issue_date=date(2026, 1, 15)
+        )
+        CertificateValidityEngine.apply_validity_evaluation(doc)
+
+        # Grounded validity
+        self.assertIsNotNone(doc.expiry_date)
+        self.assertEqual(doc.expiry_date, date(2027, 1, 15))
+        self.assertEqual(doc.validity_status, ValidityStatusChoices.VALID)
+        self.assertIn('Nadakacheri', doc.rag_explanation)
+        self.assertTrue(len(doc.rag_citations) > 0)
+        self.assertIn('https://nadakacheri.karnataka.gov.in', [c['source_url'] for c in doc.rag_citations])
+        self.assertGreaterEqual(doc.retrieval_confidence, 0.90)
+
+    def test_rag_powered_permanent_validity_with_citations(self):
+        """SC/ST Caste Certificates must receive NO_EXPIRY_APPLICABLE and central ministry citations."""
+        test_file = SimpleUploadedFile("caste.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.CASTE_CERTIFICATE,
+            document_file=test_file,
+            original_filename="caste.pdf",
+            state='All India'
+        )
+        CertificateValidityEngine.apply_validity_evaluation(doc)
+
+        self.assertEqual(doc.validity_status, ValidityStatusChoices.NO_EXPIRY_APPLICABLE)
+        self.assertIsNone(doc.expiry_date)
+        self.assertIsNone(doc.get_remaining_days())
+        self.assertIn('Lifetime', doc.rag_validity_period)
+        self.assertTrue(len(doc.rag_citations) > 0)
+        self.assertIn('https://socialjustice.gov.in', [c['source_url'] for c in doc.rag_citations])
+
+    def test_rag_powered_verification_required_when_issue_date_missing(self):
+        """Certificates with unknown duration or missing issue date return VERIFICATION_REQUIRED without guessing."""
+        test_file = SimpleUploadedFile("unknown_income.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.INCOME_CERTIFICATE,
+            document_file=test_file,
+            original_filename="unknown_income.pdf",
+            state='Karnataka',
+            issue_date=None  # Missing issue date!
+        )
+        CertificateValidityEngine.apply_validity_evaluation(doc)
+
+        self.assertEqual(doc.validity_status, ValidityStatusChoices.VERIFICATION_REQUIRED)
+        self.assertIsNone(doc.expiry_date)
+        self.assertIn('VERIFICATION REQUIRED', doc.rag_explanation)
+
+    def test_rag_scheme_document_readiness_evaluation(self):
+        """Tests that Opportunity readiness evaluation uses RAG requirements and provides grounded citations."""
+        from apps.opportunities.models import Opportunity
+        opp = Opportunity.objects.create(
+            title="Karnataka Post-Matric State Scholarship",
+            provider="Department of Social Welfare Karnataka",
+            applicable_state="Karnataka",
+            education_levels=["Post-Graduate", "Undergraduate"],
+            max_annual_income=Decimal("250000.00"),
+            required_documents=[
+                "Income Certificate", "Caste Certificate", "Class 12 Marksheet"
+            ],
+            official_application_url="https://ssp.postmatric.karnataka.gov.in"
+        )
+
+        test_file = SimpleUploadedFile("income.pdf", b"%PDF-1.4", content_type="application/pdf")
+        UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.INCOME_CERTIFICATE,
+            document_file=test_file,
+            original_filename="income.pdf",
+            state="Karnataka",
+            expiry_date=date.today() + timedelta(days=120)
+        )
+
+        report = DocumentAnalysisService.evaluate_readiness_for_opportunity(self.user, opp)
+        self.assertEqual(report['opportunity_id'], opp.id)
+        self.assertEqual(report['total_required'], 3)
+        self.assertEqual(report['fulfilled_count'], 1)
+        self.assertEqual(len(report['missing_documents']), 2)
+        self.assertTrue(len(report['citations']) > 0)
+        self.assertEqual(report['citations'][0]['source_url'], "https://ssp.postmatric.karnataka.gov.in")
+
+    def test_rag_analysis_api_endpoint(self):
+        """Tests the GET /api/profiles/documents/<pk>/rag-analysis/ endpoint."""
+        from rest_framework.test import APIClient
+        client = APIClient()
+        client.force_authenticate(user=self.user)
+
+        test_file = SimpleUploadedFile("cert_ews.pdf", b"%PDF-1.4", content_type="application/pdf")
+        doc = UserDocument.objects.create(
+            user=self.user,
+            document_type=DocumentTypeChoices.EWS_CERTIFICATE,
+            document_file=test_file,
+            original_filename="cert_ews.pdf",
+            issue_date=date(2026, 1, 10),
+            state="All India"
+        )
+        CertificateValidityEngine.apply_validity_evaluation(doc)
+
+        response = client.get(f'/api/profile/documents/{doc.id}/rag-analysis/')
+        self.assertEqual(response.status_code, 200)
+        res_data = response.json()
+        self.assertEqual(res_data['document_id'], doc.id)
+        self.assertEqual(res_data['document_type'], 'EWS_CERTIFICATE')
+        self.assertEqual(res_data['validity_status'], 'VALID')
+        self.assertTrue(len(res_data['citations']) > 0)
+        self.assertIn('https://dopt.gov.in', [c['source_url'] for c in res_data['citations']])
+        self.assertTrue(len(res_data['retrieved_guidelines']) > 0)

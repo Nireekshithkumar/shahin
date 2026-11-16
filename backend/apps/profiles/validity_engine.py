@@ -1,17 +1,15 @@
-from datetime import date, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import date
 from apps.profiles.models import (
     UserDocument, CertificateValidityRule, DocumentTypeChoices,
     ValidityStatusChoices, AuthenticityStatusChoices
 )
+from apps.ai_assistant.document_intelligence import RAGDocumentIntelligenceEngine
 
 class CertificateValidityEngine:
     """
-    Intelligent Rule-Based Certificate Validity Engine for Government Scheme Assist AI.
-    Implements 3-tier priority resolution:
-      - Priority 1: Explicit expiry date printed on certificate.
-      - Priority 2: Official state/authority validity duration rule.
-      - Priority 3: Scheme-specific or document-nature defaults (permanent vs session).
+    RAG-Powered Intelligent Certificate Validity Engine for Government Scheme Assist AI.
+    Replaces static manual filters by retrieving official government guidelines, circulars,
+    and gazettes through RAG (Retrieval-Augmented Generation).
     Strictly separates Date Validity from Government Authenticity.
     """
 
@@ -20,113 +18,34 @@ class CertificateValidityEngine:
     @classmethod
     def evaluate_document_validity(cls, doc: UserDocument) -> dict:
         """
-        Evaluates a UserDocument and returns {
-          'validity_status': str,
-          'expiry_date': date or None,
-          'remaining_days': int or None,
-          'validity_source': str,
-          'authenticity_status': str,
-          'notes': str
-        }
+        Evaluates a UserDocument using RAG-grounded intelligence.
+        Returns complete validity assessment with citations, confidence, and grounded explanations.
         """
-        today = date.today()
-        doc_type = doc.document_type
         warning_days = doc.warning_period_days or cls.DEFAULT_WARNING_DAYS
-
-        # Check non-expiring types inherently
-        inherent_no_expiry_types = {
-            DocumentTypeChoices.MARKS_CARD,
-            DocumentTypeChoices.AADHAAR_CARD,
-            DocumentTypeChoices.BANK_PASSBOOK,
-        }
-        if doc_type in inherent_no_expiry_types:
-            return {
-                'validity_status': ValidityStatusChoices.NO_EXPIRY_APPLICABLE,
-                'expiry_date': None,
-                'remaining_days': None,
-                'validity_source': 'Inherent Document Nature: Permanent Academic / Identity Record',
-                'authenticity_status': doc.authenticity_status or AuthenticityStatusChoices.AUTHENTICITY_NOT_VERIFIED,
-                'notes': 'Document does not have a general expiry date under government guidelines.'
-            }
-
-        # Priority 1: Explicit expiry date printed on the certificate
         target_expiry = doc.expiry_date or doc.detected_expiry_date
-        validity_source = ""
 
-        if target_expiry:
-            validity_source = "Priority 1: Explicit printed expiry date on certificate"
-        else:
-            # Priority 2: Check official validity rules database for (cert_type, state)
-            state_query = doc.state.strip() if doc.state else 'All India'
-            rule = CertificateValidityRule.objects.filter(
-                certificate_type=doc_type,
-                is_active=True
-            ).filter(state__iexact=state_query).first()
-
-            if not rule and state_query != 'All India':
-                # Fallback to All India rule
-                rule = CertificateValidityRule.objects.filter(
-                    certificate_type=doc_type,
-                    state__iexact='All India',
-                    is_active=True
-                ).first()
-
-            if rule:
-                if rule.has_no_general_expiry:
-                    return {
-                        'validity_status': ValidityStatusChoices.NO_EXPIRY_APPLICABLE,
-                        'expiry_date': None,
-                        'remaining_days': None,
-                        'validity_source': f"Priority 2: Official Rule ({rule.state}) - Permanent / No Expiry",
-                        'authenticity_status': doc.authenticity_status or AuthenticityStatusChoices.AUTHENTICITY_NOT_VERIFIED,
-                        'notes': rule.notes or 'No general expiry applicable as per verified state notification.'
-                    }
-                elif rule.validity_duration_months and doc.issue_date:
-                    target_expiry = doc.issue_date + relativedelta(months=rule.validity_duration_months)
-                    validity_source = f"Priority 2: Official Rule ({rule.state}) - {rule.validity_duration_months} Months from Issue Date"
-
-        # If no explicit date and no duration rule can calculate expiry
-        if not target_expiry:
-            # Check if this document type is generally considered permanent
-            if doc_type in [DocumentTypeChoices.CASTE_CERTIFICATE, DocumentTypeChoices.NATIVITY_CERTIFICATE]:
-                return {
-                    'validity_status': ValidityStatusChoices.NO_EXPIRY_APPLICABLE,
-                    'expiry_date': None,
-                    'remaining_days': None,
-                    'validity_source': 'Priority 3: General Government Notification (Permanent Caste/Nativity)',
-                    'authenticity_status': doc.authenticity_status or AuthenticityStatusChoices.AUTHENTICITY_NOT_VERIFIED,
-                    'notes': 'Permanent certificate. No expiry date applicable unless re-verification is ordered.'
-                }
-
-            return {
-                'validity_status': ValidityStatusChoices.VERIFICATION_REQUIRED,
-                'expiry_date': None,
-                'remaining_days': None,
-                'validity_source': 'No explicit expiry date or issue date available for rule evaluation',
-                'authenticity_status': doc.authenticity_status or AuthenticityStatusChoices.AUTHENTICITY_NOT_VERIFIED,
-                'notes': 'VERIFICATION REQUIRED: Expiry information is missing or unclear. Please verify certificate dates.'
-            }
-
-        # Calculate remaining days and determine status
-        remaining_days = (target_expiry - today).days
-
-        if remaining_days < 0:
-            status = ValidityStatusChoices.EXPIRED
-            notes = f"EXPIRED: Established validity expired on {target_expiry} ({abs(remaining_days)} days ago)."
-        elif remaining_days <= warning_days:
-            status = ValidityStatusChoices.EXPIRING_SOON
-            notes = f"EXPIRING SOON: Certificate will expire in {remaining_days} days on {target_expiry}. Prepare renewal."
-        else:
-            status = ValidityStatusChoices.VALID
-            notes = f"VALID: Certificate is valid until {target_expiry} ({remaining_days} days remaining)."
+        rag_result = RAGDocumentIntelligenceEngine.analyze_certificate_with_rag(
+            doc_type=doc.document_type,
+            issue_date=doc.issue_date,
+            explicit_expiry=target_expiry,
+            state=doc.state,
+            issuing_authority=doc.issuing_authority,
+            extracted_text=doc.extracted_text or "",
+            warning_days=warning_days
+        )
 
         return {
-            'validity_status': status,
-            'expiry_date': target_expiry,
-            'remaining_days': remaining_days,
-            'validity_source': validity_source,
+            'validity_status': rag_result['validity_status'],
+            'expiry_date': rag_result['expiry_date'],
+            'remaining_days': rag_result['remaining_days'],
+            'validity_source': rag_result['validity_period'],
             'authenticity_status': doc.authenticity_status or AuthenticityStatusChoices.AUTHENTICITY_NOT_VERIFIED,
-            'notes': notes
+            'notes': rag_result['explanation'],
+            'rag_explanation': rag_result['explanation'],
+            'rag_citations': rag_result['citations'],
+            'rag_validity_period': rag_result['validity_period'],
+            'rag_renewal_guidance': rag_result['renewal_guidance'],
+            'retrieval_confidence': rag_result['confidence']
         }
 
     @classmethod
@@ -138,13 +57,27 @@ class CertificateValidityEngine:
             doc.expiry_date = res['expiry_date']
             doc.detected_expiry_date = res['expiry_date']
         doc.is_expired = (res['validity_status'] == ValidityStatusChoices.EXPIRED)
+        doc.rag_explanation = res.get('rag_explanation', '')
+        doc.rag_citations = res.get('rag_citations', [])
+        doc.rag_validity_period = res.get('rag_validity_period', '')
+        doc.rag_renewal_guidance = res.get('rag_renewal_guidance', '')
+        doc.retrieval_confidence = res.get('retrieval_confidence', 0.0)
+        doc.analysis_notes = res.get('notes', doc.analysis_notes)
+
         if save:
-            doc.save(update_fields=['validity_status', 'expiry_date', 'detected_expiry_date', 'is_expired'])
+            doc.save(update_fields=[
+                'validity_status', 'expiry_date', 'detected_expiry_date', 'is_expired',
+                'rag_explanation', 'rag_citations', 'rag_validity_period',
+                'rag_renewal_guidance', 'retrieval_confidence', 'analysis_notes'
+            ])
         return doc
 
     @classmethod
     def seed_default_rules(cls):
-        """Seeds standard verified government certificate validity rules across India."""
+        """Seeds standard verified government certificate validity rules across India and indexes into RAG."""
+        # Index guidelines into RAG vector and chunks
+        RAGDocumentIntelligenceEngine.index_certificate_guidelines()
+
         rules_data = [
             # Central & All India Rules
             {
